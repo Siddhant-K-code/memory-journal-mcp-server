@@ -1,0 +1,18 @@
+[project]
+name = "memory-journal-mcp-server"
+version = "0.1.0"
+description = "MCP server for memory journal from local photos (iCloud Photos)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "dateparser>=1.2.0",
+    "httpx>=0.28.1",
+    "mcp>=1.2.0",
+    "osxphotos>=0.69.2",
+    "spacy>=3.8.4",
+    "thefuzz>=0.22.1",
+]
+
+[[project.authors]]
+name = "Siddhant Khare"
+email = "siddhantkhare2694@gmail.com"
