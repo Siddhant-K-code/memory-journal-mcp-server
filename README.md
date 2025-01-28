@@ -5,6 +5,8 @@
 > **Inspired by:** [burningion/video-editing-mcp](https://github.com/burningion/video-editing-mcp)
 > A huge shoutout to [@burningion](https://x.com/burningion) for the innovative idea of using MCP for creative media management!
 
+<a href="https://glama.ai/mcp/servers/51jiworg5k"><img width="380" height="200" src="https://glama.ai/mcp/servers/51jiworg5k/badge" alt="Smart Photo Journal Server MCP server" /></a>
+
 ## 🎯 Features
 
 - **Location Search:** Find photos from specific places with ease. 🌍
