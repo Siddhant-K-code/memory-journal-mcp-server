@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/siddhant-k-code-memory-journal-mcp-server-badge.png)](https://mseep.ai/app/siddhant-k-code-memory-journal-mcp-server)
+
 # 📸 Smart Photo Journal MCP Server
 
 **Smart Photo Journal** is an MCP server designed to help you search and analyze your photo library with powerful, intuitive tools. Whether you're reminiscing about family moments or looking for a specific photo with friends, this server has got you covered! 🎉
