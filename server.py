@@ -170,7 +170,7 @@ def location_search(location: str) -> str:
         matching_photos = [
             photo
             for photo in photos
-            if photo.place and location_lower in photo.place.name.lower()
+            if photo.place and photo.place.name and location_lower in photo.place.name.lower()
         ]
 
         if matching_photos:
