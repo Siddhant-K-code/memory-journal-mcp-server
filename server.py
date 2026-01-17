@@ -13,37 +13,50 @@ from thefuzz import fuzz
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    format="%(asctime)s - %(name)s - %(levelname)s - %(filename)s - %(lineno)d - %(message)s",
     handlers=[
         logging.FileHandler("smart_photo_journal.log"),
         logging.StreamHandler(),
     ],
 )
+logger = logging.getLogger(__name__)
 
 
 class PhotosDBLoader:
     def __init__(self):
         self._db: Optional[osxphotos.PhotosDB] = None
+        self._loading = True
+        self._error: Optional[str] = None
         self.start_loading()
 
     def start_loading(self):
         def load():
             try:
+                logger.info("Starting PhotosDB load...")
                 self._db = osxphotos.PhotosDB()
-                logging.info("PhotosDB loaded successfully.")
+                logger.info(f"PhotosDB loaded successfully. Found {len(self._db.photos())} photos.")
+                self._loading = False
             except Exception as e:
-                logging.error(f"Failed to load PhotosDB: {e}")
-                raise
+                logger.error(f"Failed to load PhotosDB: {e}")
+                self._error = str(e)
+                self._loading = False
 
         thread = threading.Thread(target=load)
         thread.daemon = True
         thread.start()
 
     @property
+    def is_ready(self) -> bool:
+        return self._db is not None and not self._loading
+
+    @property
     def db(self) -> osxphotos.PhotosDB:
+        if self._loading:
+            raise Exception("PhotosDB is still loading. Please try again in a moment.")
+        if self._error:
+            raise Exception(f"PhotosDB failed to load: {self._error}")
         if self._db is None:
-            logging.warning("PhotosDB is still loading; access attempted.")
-            raise Exception("PhotosDB is still loading. Please try again later.")
+            raise Exception("PhotosDB not initialized")
         return self._db
 
 
@@ -66,18 +79,18 @@ def get_photo_details(photo: osxphotos.PhotoInfo) -> dict:
     filename = (
         getattr(photo, "original_filename", None)
         or getattr(photo, "title", None)
-        or photo.path.split("/")[-1]
+        or (photo.path.split("/")[-1] if photo.path else None)
         or photo.filename
     )
 
     return {
         "filename": filename,
-        "date": photo.date.strftime("%Y-%m-%d %H:%M:%S"),
+        "date": photo.date.strftime("%Y-%m-%d %H:%M:%S") if photo.date else "Unknown",
         "location": photo.place.name if photo.place else "Unknown",
         "path": photo.path,
-        "persons": photo.persons,
-        "labels": getattr(photo, "labels", []),
-        "keywords": getattr(photo, "keywords", []),
+        "persons": photo.persons or [],
+        "labels": getattr(photo, "labels", []) or [],
+        "keywords": getattr(photo, "keywords", []) or [],
     }
 
 
@@ -121,7 +134,7 @@ def format_photo_results(photos: List[osxphotos.PhotoInfo], title: str, limit: i
     if not photos:
         return f"No {title.lower()} found"
 
-    photos.sort(key=lambda x: x.date)
+    photos.sort(key=lambda x: x.date if x.date else datetime.min)
 
     total = len(photos)
     photos = photos[:limit]
@@ -150,7 +163,7 @@ def location_search(location: str) -> str:
         location: Location name to search for (e.g., "Shenzhen", "Berlin", "New York")
     """
     try:
-        logging.info(f"Location search for: {location}")
+        logger.info(f"Location search for: {location}")
         location_lower = location.lower()
         photos = photos_loader.db.photos()
 
@@ -161,7 +174,7 @@ def location_search(location: str) -> str:
         ]
 
         if matching_photos:
-            matching_photos.sort(key=lambda x: x.date)
+            matching_photos.sort(key=lambda x: x.date if x.date else datetime.min)
 
             total = len(matching_photos)
             display_photos = matching_photos[:50]
@@ -187,7 +200,7 @@ def location_search(location: str) -> str:
             return f"No photos found from {location}"
 
     except Exception as e:
-        logging.error(f"Error in location search: {e}")
+        logger.error(f"Error in location search: {e}", exc_info=True)
         return f"Error searching for location: {str(e)}"
 
 
@@ -199,11 +212,11 @@ def label_search(label: str) -> str:
         label: Label or keyword to search for
     """
     try:
-        logging.info(f"Label search for: {label}")
+        logger.info(f"Label search for: {label}")
         photos = get_photos_by_criteria(photos_loader.db, keyword=label.lower())
         return format_photo_results(photos, f"Photos labeled as '{label}'")
     except Exception as e:
-        logging.error(f"Error in label search: {e}")
+        logger.error(f"Error in label search: {e}", exc_info=True)
         return f"Error searching for label: {str(e)}"
 
 
@@ -215,11 +228,11 @@ def people_search(person: str) -> str:
         person: Name of person to search for
     """
     try:
-        logging.info(f"People search for: {person}")
+        logger.info(f"People search for: {person}")
         photos = get_photos_by_criteria(photos_loader.db, person=person.lower())
         return format_photo_results(photos, f"Photos with {person}")
     except Exception as e:
-        logging.error(f"Error in people search: {e}")
+        logger.error(f"Error in people search: {e}", exc_info=True)
         return f"Error searching for person: {str(e)}"
 
 
@@ -227,7 +240,7 @@ def people_search(person: str) -> str:
 def photo_stats() -> str:
     """Get statistics about your photo library including total count, top locations, and people."""
     try:
-        logging.info("Getting photo stats")
+        logger.info("Getting photo stats")
         photos = photos_loader.db.photos()
 
         locations = Counter(p.place.name for p in photos if p.place)
@@ -250,10 +263,10 @@ def photo_stats() -> str:
 
         return "\n".join(stats)
     except Exception as e:
-        logging.error(f"Error getting photo stats: {e}")
+        logger.error(f"Error getting photo stats: {e}", exc_info=True)
         return f"Error getting photo stats: {str(e)}"
 
 
 if __name__ == "__main__":
-    logging.info("Starting Smart Photo Journal MCP server.")
+    logger.info("Starting Smart Photo Journal MCP server.")
     mcp.run()
