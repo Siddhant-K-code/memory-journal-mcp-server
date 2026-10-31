@@ -67,8 +67,11 @@ Library metadata is cached for the server process. Restart it to pick up new imp
 | `location-search` | Existing place-search name, now with date filters and pagination. |
 | `label-search` | Existing label-search name; matches labels **or** keywords. |
 | `people-search` | Existing people-search name; searches Photos person tags. |
-| `get-photo-details` | Look up one UUID, including original/edited paths and preview availability. |
+| `get-photo-details` | Look up one UUID. Labels and local paths are opt-in. |
 | `get-photo-preview` | Return an existing local preview as MCP image content. |
+| `get-trip-analytics` | Aggregate a bounded dated selection: family, time, camera, modes, edits, crops, storage and coverage. |
+| `get-trip-photo-metadata` | Paginated dimensions, cached EXIF, existing Photos scores and motion availability. |
+| `get-trip-moments` | Paginated rapid-capture candidates or capture sessions, with UUID samples. |
 
 ### Find a trip
 
@@ -89,7 +92,7 @@ Call `search-photos` with:
 - With `timezone`, dates are interpreted in that IANA time zone. Without it, each photo's capture-local calendar date is used. Returned dates retain the capture time-zone offset.
 - Locations match **any** supplied substring. People match **all** supplied names. Labels/keywords match **any** supplied term. The different filter categories are combined with AND.
 - Search is case-insensitive. `fuzzy: true` additionally allows approximate matches. Combined search defaults to `false`; legacy `people-search` defaults to `true` for compatibility. People names come from existing Photos tags; this server does not identify faces or infer name aliases.
-- `media_type` is `photo` (default), `video`, or `all`. Live Photo still images remain photos. Hidden and trashed assets are excluded from all six tools. Local-only photos are included, even when they are not synced to iCloud.
+- `media_type` is `photo` (default), `video`, or `all`. Trip tools default to `all`. Live Photo still images remain photos. Hidden and trashed assets are excluded from all tools. Local-only photos are included, even when they are not synced to iCloud.
 - Results default to 25 records; `limit` is 1–100. `sort` is `oldest` or `newest`. Ordering uses capture time, then UUID to break ties.
 
 Each page is returned as `structuredContent` and serialized JSON text for clients that use text results:
@@ -104,7 +107,7 @@ Each page is returned as `structuredContent` and serialized JSON text for client
 }
 ```
 
-Repeat the same filters with `offset` set to `next_offset` until it is `null`. `total` counts matching assets before pagination. Each item includes its `uuid`, original filename, ISO capture date, place, Photos person tags, media type and whether its original is available locally.
+Repeat the same filters with `offset` set to `next_offset` until it is `null`. `total` counts matching assets before pagination. Each item includes its `uuid`, original filename, ISO capture date, media type and whether its original is available locally. Location is `null` and people is an empty list unless the projection and host policy below permit them.
 
 The legacy tool names accept the same optional date/paging arguments alongside their required `location`, `label`, or `person` string. In 0.2, their output changes from unbounded prose to the same structured page format. Consumers that scrape the old text should read the JSON page instead.
 
@@ -120,6 +123,50 @@ The legacy tool names accept the same optional date/paging arguments alongside t
 ```
 
 This finds images carrying **all three** person tags. Empty location filters allow untagged travel photos to appear; adding locations narrows the results to matching place metadata.
+
+### Location and person disclosure
+
+Version 0.3 defaults to no location/name output, even when those fields were used to filter locally. Precise coordinates and full place strings are never returned. To permit city output and specific existing name tags, set these in the MCP server's environment on the trusted host:
+
+```toml
+PHOTO_LOCATION_POLICY = "city"
+PHOTO_ALLOWED_PERSON_NAMES = '["Alex", "Sam", "Taylor"]'
+```
+
+These settings are a ceiling, not a default projection. A call must also explicitly request `"location_mode": "city"` and/or `"person_names": ["Alex"]`. The names returned are the intersection of the request, host allowlist and existing tags. Missing city metadata remains null; the server does not fall back to a detailed place name. `PHOTO_LOCATION_POLICY=none` and `PHOTO_ALLOWED_PERSON_NAMES=[]` deny output regardless of client arguments. Invalid host policy fails closed. Restart after changes.
+
+This controls output fields, not which library records can be searched. Known place/name filters still execute locally and their matching UUIDs/counts are observable. Dates, filenames, previews, requested scene labels and opt-in filesystem paths can themselves reveal context. This is not a complete anonymization or authorization system. `get-photo-details` now requires `include_paths: true` for local paths and `include_labels: true` for labels/keywords.
+
+### Trip analytics and photo explorer
+
+```json
+{
+  "start_date": "2026-10-24",
+  "end_date": "2026-10-30",
+  "timezone": "Asia/Tokyo",
+  "locations": ["Kyoto", "Osaka"],
+  "location_mode": "city",
+  "person_names": ["Alex", "Sam", "Taylor"],
+  "include_labels": true
+}
+```
+
+Use this with `get-trip-analytics`. All three trip tools require inclusive start/end dates, allow at most 366 days and 5,000 matched assets, and fail explicitly rather than silently truncating an oversized selection. Optional `uuids` (1–1,000 unique IDs) intersects an existing shortlist with dates and other filters. Metadata/moment pages default to 25 with maximum 100. Moment UUID samples are capped at 100 per group with `count` and `uuids_truncated` fields.
+
+Analytics include zero-count days, capture-hour bins, requested-person co-occurrence, camera/lens/modes, dimensions, centred crop-area trade-offs, existing edit/favorite flags, local availability, original byte counts, video duration coverage and experimental stored-score coverage. Rapid groups default to adjacent gaps of at most 5 seconds (`retake_seconds`: 0–60); sessions split at gaps over 30 minutes (`session_minutes`: 1–240). They do not establish visual duplication, dwell time, activities or actual travel distance. File-size totals exclude Live Photo motion companions, edits and caches. Photos' cached EXIF may differ from current originals; missing EXIF is reported as unknown. A zero aesthetic score is treated as uncomputed/unknown. Score meanings and ranking direction are undocumented and require visual review.
+
+Generate a private local explorer from the same filters:
+
+```sh
+uv run trip_report.py --start-date 2026-10-24 --end-date 2026-10-30 \
+  --timezone Asia/Tokyo --location Kyoto --location Osaka \
+  --location-mode city --person-name Alex --person-name Sam \
+  --include-labels --standalone --preview-size 384 --output /private/tmp/trip-report.html
+```
+
+Host disclosure settings also apply to this command. `--selection-json` accepts a JSON UUID list; `--shortlist-json` sets the initial carousel. The report supports a day/hour timeline, family coverage, rapid-shot and preview-hash comparisons, experimental score sorting, camera/mode browsing, reorderable carousel crop previews, a motion plan and archive checks. Preview-hash pairs are limited to 60 seconds and the same known city, with a Hamming distance of at most 10/64; these are comparison candidates, not verified duplicates. Reports without city disclosure disable hash-pair suggestions rather than grouping unknown cities. Crop and keeper choices change the report only. The command does not render videos, modify Photos, download iCloud assets or call an AI provider.
+
+Reports embed private metadata and local JPEG derivatives with embedded image metadata removed. They are not uploaded; keep the output outside a public checkout. The chart library loads from jsDelivr, which receives an ordinary library request, not report data. Without `--standalone`, output is an inline fragment capped at 1 MB; narrow the selection if it exceeds the limit. Standalone reports allow larger previews. A public city-centre map requires separately supplied public geometry; no photo GPS is read to create a map.
 
 ### Inspect a candidate
 

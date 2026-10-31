@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Trip photo explorer</title>
+    <meta name="referrer" content="no-referrer" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; object-src 'none'"
+    />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --font-size-base: 15px;
+        --background: light-dark(#fbfdfe, #101b21);
+        --foreground: light-dark(#132a32, #e9f2f5);
+        --muted: light-dark(#edf5f7, #22343e);
+        --muted-foreground: light-dark(#547077, #adc4ce);
+        --border: light-dark(#bed5df, #36505e);
+        --primary: light-dark(#183b4d, #d4e8f1);
+        --primary-foreground: light-dark(#fbfdfe, #132a32);
+        --viz-series-1: light-dark(#356d86, #89bcd2);
+        --viz-series-2: light-dark(#85623e, #d2ac77);
+        --viz-series-3: light-dark(#4c7b62, #92c7aa);
+        --card: var(--muted);
+        --card-foreground: var(--foreground);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--background);
+        color: var(--foreground);
+        font:
+          400 var(--font-size-base) / 1.5 "Avenir Next",
+          Avenir,
+          system-ui,
+          sans-serif;
+      }
+      main {
+        max-width: 1120px;
+        margin: auto;
+        padding: 24px;
+      }
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+      h1 {
+        font-size: 1.6em;
+        font-weight: 500;
+      }
+      h2 {
+        font-size: 1.2em;
+        font-weight: 500;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:disabled {
+        cursor: default;
+        opacity: 0.45;
+      }
+      button:focus-visible,
+      select:focus-visible,
+      input:focus-visible {
+        outline: 2px solid var(--viz-series-1);
+        outline-offset: 3px;
+      }
+      .nav,
+      .viz-controls,
+      .viz-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .nav-link,
+      .btn {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 11px;
+        background: transparent;
+        color: inherit;
+      }
+      .nav-link {
+        border: 0;
+        border-radius: 22px;
+      }
+      .nav-link.active,
+      .btn[aria-pressed="true"] {
+        background: var(--primary);
+        color: var(--primary-foreground);
+      }
+      .form-label {
+        display: grid;
+        gap: 5px;
+      }
+      .form-select {
+        max-width: 100%;
+        background: var(--background);
+        color: var(--foreground);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 7px;
+      }
+      .form-range {
+        width: 100%;
+        accent-color: var(--viz-series-1);
+      }
+      .text-small {
+        font-size: 0.85em;
+      }
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .table th,
+      .table td {
+        text-align: left;
+        padding: 9px;
+        border-bottom: 1px solid var(--border);
+      }
+      .table-responsive {
+        overflow-x: auto;
+      }
+      .tabular-nums {
+        font-variant-numeric: tabular-nums;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      @media (max-width: 600px) {
+        main {
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main><!--TRIP_REPORT--></main>
+  </body>
+</html>

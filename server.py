@@ -21,6 +21,8 @@ from mcp.types import CallToolResult, ImageContent, TextContent, Tool, ToolAnnot
 from PIL import Image, ImageOps, UnidentifiedImageError
 from thefuzz import fuzz
 
+import analytics
+
 logger = logging.getLogger(__name__)
 DEFAULT_LIMIT = 25
 MAX_LIMIT = 100
@@ -77,7 +79,7 @@ class PhotosDBLoader:
 photos_loader = PhotosDBLoader()
 server = Server(
     "smart-photo-journal",
-    version="0.2.0",
+    version="0.3.0",
     instructions=(
         "Search Apple Photos with search-photos and explicit date/place/person filters. "
         "Results are paginated; follow next_offset with the same filters to see more. "
@@ -85,6 +87,9 @@ server = Server(
         "People names are Photos tags, not new face identification. Preview images "
         "are for selection; use full-resolution originals for posting. The server "
         "does not export, download from iCloud, modify Photos, or publish anything."
+        " Trip analytics require inclusive dates and expose cached metadata only. "
+        "City names and selected person tags are off by default and require both "
+        "host policy and an explicit request; precise coordinates are never returned."
     ),
 )
 
@@ -97,13 +102,38 @@ def photo_location(photo):
     return (photo.place.name if photo.place else None) or None
 
 
-def photo_summary(photo):
+def disclosure(options):
+    """Client arguments can narrow disclosure; trusted host settings set its ceiling."""
+    policy = os.environ.get("PHOTO_LOCATION_POLICY", "none")
+    if policy not in {"none", "city"}:
+        raise ValueError("PHOTO_LOCATION_POLICY must be none or city.")
+    try:
+        allowed = json.loads(os.environ.get("PHOTO_ALLOWED_PERSON_NAMES", "[]"))
+    except json.JSONDecodeError as error:
+        raise ValueError("PHOTO_ALLOWED_PERSON_NAMES must be a JSON list of names.") from error
+    if (
+        not isinstance(allowed, list)
+        or len(allowed) > 10
+        or not all(isinstance(n, str) for n in allowed)
+    ):
+        raise ValueError("PHOTO_ALLOWED_PERSON_NAMES must be a JSON list of at most 10 names.")
+    return {
+        "location_mode": "city"
+        if policy == "city" and options.get("location_mode") == "city"
+        else "none",
+        "person_names": [n for n in options.get("person_names", []) if n in allowed],
+        "include_labels": options.get("include_labels", False),
+    }
+
+
+def photo_summary(photo, options=None):
+    projection = disclosure(options or {})
     return {
         "uuid": photo.uuid,
         "filename": photo.original_filename or photo.filename or photo.uuid,
         "date": photo.date.isoformat(),
-        "location": photo_location(photo),
-        "persons": photo.persons or [],
+        "location": analytics.city_name(photo) if projection["location_mode"] == "city" else None,
+        "persons": [n for n in projection["person_names"] if n in (photo.persons or [])],
         "media_type": "video" if photo.ismovie else "photo",
         "original_available": bool(photo.path),
     }
@@ -149,14 +179,17 @@ def search_parameters(arguments):
     return start, end, zone, locations, persons, labels
 
 
-def search_photos(db, arguments):
+def select_photos(db, arguments):
     """Apply exact calendar bounds and combined criteria before paging results."""
     start, end, zone, locations, persons, labels = search_parameters(arguments)
     fuzzy = arguments.get("fuzzy", False)
     media_type = arguments.get("media_type", "photo")
+    requested = set(arguments.get("uuids", []))
     found = []
     for photo in db.photos():
         if not is_visible(photo):
+            continue
+        if requested and photo.uuid not in requested:
             continue
         if media_type != "all" and photo.ismovie != (media_type == "video"):
             continue
@@ -185,6 +218,11 @@ def search_photos(db, arguments):
         key=lambda photo: (photo.date.timestamp(), photo.uuid),
         reverse=arguments.get("sort", "oldest") == "newest",
     )
+    return found
+
+
+def search_photos(db, arguments):
+    found = select_photos(db, arguments)
     offset, limit = arguments.get("offset", 0), arguments.get("limit", DEFAULT_LIMIT)
     page = found[offset : offset + limit]
     next_offset = offset + len(page)
@@ -193,7 +231,7 @@ def search_photos(db, arguments):
         "offset": offset,
         "returned": len(page),
         "next_offset": next_offset if next_offset < len(found) else None,
-        "items": [photo_summary(photo) for photo in page],
+        "items": [photo_summary(photo, arguments) for photo in page],
     }
 
 
@@ -205,16 +243,97 @@ def find_photo(db, uuid):
     raise ValueError("Photo UUID not found in the visible library.")
 
 
-def get_photo_details(db, uuid):
+def get_photo_details(db, uuid, **options):
     photo = find_photo(db, uuid)
-    return {
-        **photo_summary(photo),
-        "labels": photo.labels or [],
-        "keywords": photo.keywords or [],
-        "original_path": photo.path,
-        "edited_path": photo.path_edited,
+    result = {
+        **photo_summary(photo, options),
+        "labels": (photo.labels or []) if options.get("include_labels") else [],
+        "keywords": (photo.keywords or []) if options.get("include_labels") else [],
         "preview_available": bool(photo.path_derivatives),
         "favorite": photo.favorite,
+    }
+    if options.get("include_paths", False):
+        result.update(original_path=photo.path, edited_path=photo.path_edited)
+    return result
+
+
+def validate_trip(options):
+    start, end, *_ = search_parameters(options)
+    if not start or not end:
+        raise ValueError("Trip analysis requires start_date and end_date.")
+    if (end - start).days > 365:
+        raise ValueError("Trip analysis supports at most 366 calendar days.")
+    return start, end
+
+
+def trip_records(db, options):
+    validate_trip(options)
+    found = select_photos(db, {**options, "media_type": options.get("media_type", "all")})
+    if len(found) > analytics.MAX_ASSETS:
+        raise ValueError(
+            f"Analysis exceeds {analytics.MAX_ASSETS} assets. Narrow the dates or filters."
+        )
+    zone = ZoneInfo(options["timezone"]) if "timezone" in options else None
+    return [analytics.metadata(p, zone=zone, **disclosure(options)) for p in found]
+
+
+def get_trip_analytics(db, **options):
+    start, end = validate_trip(options)
+    rows = trip_records(db, options)
+    return analytics.analyze(
+        rows,
+        start_date=start,
+        end_date=end,
+        person_names=disclosure(options)["person_names"],
+        retake_seconds=options.get("retake_seconds", 5),
+        session_minutes=options.get("session_minutes", 30),
+    )
+
+
+def get_trip_photo_metadata(db, **options):
+    rows = trip_records(db, options)
+    offset, limit = options.get("offset", 0), options.get("limit", DEFAULT_LIMIT)
+    page = rows[offset : offset + limit]
+    return {
+        "total": len(rows),
+        "offset": offset,
+        "returned": len(page),
+        "next_offset": offset + len(page) if offset + len(page) < len(rows) else None,
+        "items": page,
+    }
+
+
+def get_trip_moments(db, **options):
+    rows = [r for r in trip_records(db, options) if r["media_type"] == "photo"]
+    kind = options.get("kind", "retakes")
+    gap = (
+        options.get("retake_seconds", 5)
+        if kind == "retakes"
+        else options.get("session_minutes", 30) * 60
+    )
+    groups = analytics.capture_groups(rows, gap)
+    if kind == "retakes":
+        groups = [g for g in groups if len(g["uuids"]) > 1]
+    if options.get("sort") == "newest":
+        groups.reverse()
+    # Groups can be large; paginate groups and bound each UUID sample explicitly.
+    offset, limit = options.get("offset", 0), options.get("limit", DEFAULT_LIMIT)
+    page = [
+        {
+            **g,
+            "count": len(g["uuids"]),
+            "uuids": g["uuids"][:100],
+            "uuids_truncated": len(g["uuids"]) > 100,
+        }
+        for g in groups[offset : offset + limit]
+    ]
+    return {
+        "kind": kind,
+        "total": len(groups),
+        "returned": len(page),
+        "offset": offset,
+        "next_offset": offset + len(page) if offset + len(page) < len(groups) else None,
+        "items": page,
     }
 
 
@@ -256,7 +375,22 @@ def get_photo_preview(db, uuid, max_dimension=1024):
 DATE = {"type": "string", "pattern": r"^\d{4}-\d{2}-\d{2}$"}
 TERM = {"type": "string", "minLength": 1, "maxLength": 200}
 TERMS = {"type": "array", "items": TERM, "maxItems": 10}
+PROJECTION_INPUTS = {
+    "location_mode": {
+        "type": "string",
+        "enum": ["none", "city"],
+        "default": "none",
+        "description": "City only when host PHOTO_LOCATION_POLICY also permits city.",
+    },
+    "person_names": {
+        **TERMS,
+        "uniqueItems": True,
+        "description": "Return only these exact existing tags, intersected with the host's PHOTO_ALLOWED_PERSON_NAMES.",
+    },
+    "include_labels": {"type": "boolean", "default": False},
+}
 COMMON_INPUTS = {
+    **PROJECTION_INPUTS,
     "start_date": {**DATE, "description": "First calendar day, inclusive."},
     "end_date": {**DATE, "description": "Last calendar day, inclusive for the entire day."},
     "timezone": {
@@ -270,6 +404,23 @@ COMMON_INPUTS = {
     "limit": {"type": "integer", "minimum": 1, "maximum": MAX_LIMIT, "default": DEFAULT_LIMIT},
     "offset": {"type": "integer", "minimum": 0, "default": 0},
     "sort": {"type": "string", "enum": ["oldest", "newest"], "default": "oldest"},
+}
+TRIP_INPUTS = {
+    **COMMON_INPUTS,
+    "media_type": {"type": "string", "enum": ["photo", "video", "all"], "default": "all"},
+    "locations": TERMS,
+    "persons": TERMS,
+    "labels": TERMS,
+    "uuids": {
+        "type": "array",
+        "items": TERM,
+        "minItems": 1,
+        "maxItems": 1000,
+        "uniqueItems": True,
+        "description": "Optional exact selection, still intersected with date and other filters.",
+    },
+    "retake_seconds": {"type": "integer", "minimum": 0, "maximum": 60, "default": 5},
+    "session_minutes": {"type": "integer", "minimum": 1, "maximum": 240, "default": 30},
 }
 SUMMARY_SCHEMA = {
     "type": "object",
@@ -361,9 +512,34 @@ TOOLS = [
     ],
     tool(
         "get-photo-details",
-        "Get full metadata and local original/edited paths for one UUID returned by search. Filenames are not unique.",
-        {"uuid": TERM},
+        "Get metadata for one UUID. Names and city require host policy plus explicit projection; labels and paths are opt-in.",
+        {"uuid": TERM, **PROJECTION_INPUTS, "include_paths": {"type": "boolean", "default": False}},
         ("uuid",),
+    ),
+    tool(
+        "get-trip-analytics",
+        "Analyze a dated selection: daily/hourly counts, requested family tags, camera/lens/modes, crop loss, edit/storage/coverage, rapid-capture and session counts. Max 366 days/5000 assets. No precise GPS. Names/cities are host-gated and off by default; labels opt-in. Scores are undocumented hints, not quality verdicts.",
+        {
+            key: value
+            for key, value in TRIP_INPUTS.items()
+            if key not in {"limit", "offset", "sort"}
+        },
+        ("start_date", "end_date"),
+    ),
+    tool(
+        "get-trip-photo-metadata",
+        "Paginated per-asset trip metadata for photo comparisons, crop planning and video selection. Cached EXIF and existing Photos analysis only; no image inference, downloads or precise GPS. Same scope and projection limits as get-trip-analytics.",
+        TRIP_INPUTS,
+        ("start_date", "end_date"),
+    ),
+    tool(
+        "get-trip-moments",
+        "Paginated rapid-capture candidate stacks or capture sessions. Time proximity does not prove visual duplication, activity duration or dwell time. Each group includes at most 100 UUIDs with an explicit truncation flag.",
+        {
+            **TRIP_INPUTS,
+            "kind": {"type": "string", "enum": ["retakes", "sessions"], "default": "retakes"},
+        },
+        ("start_date", "end_date"),
     ),
     tool(
         "get-photo-preview",
@@ -398,6 +574,7 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]):
             raise ValueError(f"Unknown tool: {name}")
         jsonschema.validate(arguments, definition.inputSchema)
         options = dict(arguments)
+        disclosure(options)
         for legacy, field, target in [
             ("location-search", "location", "locations"),
             ("label-search", "label", "labels"),
@@ -409,11 +586,20 @@ async def handle_call_tool(name: str, arguments: dict[str, Any]):
             options.setdefault("fuzzy", True)
         if name not in {"get-photo-preview", "get-photo-details"}:
             search_parameters(options)
+        if name.startswith("get-trip-"):
+            validate_trip(options)
         db = await photos_loader.get()
         if name == "get-photo-preview":
             return await asyncio.to_thread(get_photo_preview, db, **arguments)
         if name == "get-photo-details":
             return structured_result(await asyncio.to_thread(get_photo_details, db, **arguments))
+        if name.startswith("get-trip-"):
+            operation = {
+                "get-trip-analytics": get_trip_analytics,
+                "get-trip-photo-metadata": get_trip_photo_metadata,
+                "get-trip-moments": get_trip_moments,
+            }[name]
+            return structured_result(await asyncio.to_thread(operation, db, **arguments))
         return structured_result(await asyncio.to_thread(search_photos, db, options))
     except jsonschema.ValidationError as error:
         message = f"Invalid arguments: {error.message}"
