@@ -97,7 +97,8 @@
     <p id="tx-rhythm" class="text-small"></p>
     <div class="tx-field">
       <label class="form-label"
-        >Capture session<select id="tx-session" class="form-select"></select
+        >Capture session<span class="tx-control"
+          ><select id="tx-session" class="form-select"></select></span
       ></label>
     </div>
     <p id="tx-session-detail" class="text-small" aria-live="polite"></p>
@@ -139,17 +140,20 @@
     <div class="viz-controls">
       <div class="tx-field">
         <label class="form-label"
-          >Compare by<select id="tx-compare-mode" class="form-select">
-            <option value="rapid">Rapid-shot stacks</option>
-            <option value="similar">Similar preview candidates</option>
-            <option value="score">Photos' overall score</option>
-            <option value="kept">Your keepers</option>
-          </select></label
+          >Compare by<span class="tx-control"
+            ><select id="tx-compare-mode" class="form-select">
+              <option value="rapid">Rapid-shot stacks</option>
+              <option value="similar">Similar preview candidates</option>
+              <option value="score">Photos' overall score</option>
+              <option value="kept">Your keepers</option>
+            </select></span
+          ></label
         >
       </div>
       <div class="tx-field" id="tx-stack-label">
         <label class="form-label"
-          >Stack<select id="tx-stack" class="form-select"></select
+          >Stack<span class="tx-control"
+            ><select id="tx-stack" class="form-select"></select></span
         ></label>
       </div>
     </div>
@@ -183,20 +187,23 @@
     <div class="viz-controls">
       <div class="tx-field">
         <label class="form-label"
-          >Browse lens<select id="tx-lens-filter" class="form-select"></select
+          >Browse lens<span class="tx-control"
+            ><select id="tx-lens-filter" class="form-select"></select></span
         ></label>
       </div>
       <div class="tx-field">
         <label class="form-label"
-          >Browse mode<select id="tx-mode-filter" class="form-select">
-            <option value="all">All modes</option>
-            <option value="portrait">Portrait mode</option>
-            <option value="selfie">Selfies</option>
-            <option value="live_photo">Live Photos</option>
-            <option value="edited">Edited photos</option>
-            <option value="vertical">Vertical frames</option>
-            <option value="horizontal">Horizontal frames</option>
-          </select></label
+          >Browse mode<span class="tx-control"
+            ><select id="tx-mode-filter" class="form-select">
+              <option value="all">All modes</option>
+              <option value="portrait">Portrait mode</option>
+              <option value="selfie">Selfies</option>
+              <option value="live_photo">Live Photos</option>
+              <option value="edited">Edited photos</option>
+              <option value="vertical">Vertical frames</option>
+              <option value="horizontal">Horizontal frames</option>
+            </select></span
+          ></label
         >
       </div>
     </div>
@@ -213,12 +220,14 @@
     <div class="viz-controls">
       <div class="tx-field">
         <label class="form-label"
-          >Preview crop<select id="tx-crop" class="form-select">
-            <option value="original">Original framing</option>
-            <option value="0.8">4:5 vertical</option>
-            <option value="1">1:1 square</option>
-            <option value="0.5625">9:16 story</option>
-          </select></label
+          >Preview crop<span class="tx-control"
+            ><select id="tx-crop" class="form-select">
+              <option value="original">Original framing</option>
+              <option value="0.8">4:5 vertical</option>
+              <option value="1">1:1 square</option>
+              <option value="0.5625">9:16 story</option>
+            </select></span
+          ></label
         >
       </div>
       <button type="button" class="btn" id="tx-restore-carousel">
@@ -245,11 +254,13 @@
     <div class="viz-controls">
       <div class="tx-field">
         <label class="form-label"
-          >Browse<select id="tx-motion-kind" class="form-select">
-            <option value="live">Local Live Photo motion</option>
-            <option value="video">Standalone videos</option>
-            <option value="plan">Your film plan</option>
-          </select></label
+          >Browse<span class="tx-control"
+            ><select id="tx-motion-kind" class="form-select">
+              <option value="live">Local Live Photo motion</option>
+              <option value="video">Standalone videos</option>
+              <option value="plan">Your film plan</option>
+            </select></span
+          ></label
         >
       </div>
     </div>
@@ -300,6 +311,11 @@
   }
   #trip-explorer section[hidden] {
     display: none;
+  }
+  #trip-explorer .tx-control {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-width: 0;
   }
   #trip-explorer .tx-field {
     min-width: 0;
