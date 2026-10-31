@@ -158,6 +158,8 @@ Analytics include zero-count days, capture-hour bins, requested-person co-occurr
 Generate a private local explorer from the same filters:
 
 ```sh
+export PHOTO_LOCATION_POLICY=city
+export PHOTO_ALLOWED_PERSON_NAMES='["Alex", "Sam", "Taylor"]'
 uv run trip_report.py --start-date 2026-10-24 --end-date 2026-10-30 \
   --timezone Asia/Tokyo --location Kyoto --location Osaka \
   --location-mode city --person-name Alex --person-name Sam \

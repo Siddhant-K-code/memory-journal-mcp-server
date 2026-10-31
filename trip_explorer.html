@@ -490,19 +490,31 @@
     };
     const personLabel = (n) => (n === people[0] ? "You" : n);
     function stateSave() {
-      if (window.openai?.setWidgetState)
-        window.openai
-          .setWidgetState({
-            modelContent: {
-              view: S.tab,
-              date_scope: [A.scope.start_date, A.scope.end_date],
-              keeper_count: S.keepers.length,
-              carousel: S.carousel,
-              film_clips: S.film.length,
+      if (window.openai?.setWidgetState) {
+        const snapshot = {
+          modelContent: {
+            view: S.tab,
+            date_scope: [A.scope.start_date, A.scope.end_date],
+            keeper_count: S.keepers.length,
+            carousel: S.carousel,
+            film_clips: S.film.length,
+          },
+          privateContent: { tripExplorer: S },
+        };
+        if (new TextEncoder().encode(JSON.stringify(snapshot)).length > 15000) {
+          snapshot.privateContent = {
+            tripExplorer: {
+              ...S,
+              keepers: S.keepers.slice(-100),
+              film: S.film.slice(-30),
+              positions: {},
             },
-            privateContent: { tripExplorer: S },
-          })
-          .catch(() => {});
+          };
+          if (new TextEncoder().encode(JSON.stringify(snapshot)).length > 15000)
+            snapshot.privateContent = null;
+        }
+        window.openai.setWidgetState(snapshot).catch(() => {});
+      }
     }
     function restore(value) {
       const v = value?.privateContent?.tripExplorer;
