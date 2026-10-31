@@ -134,6 +134,9 @@ async def test_discovery_advertises_capabilities_without_loading_library():
         "people-search",
         "get-photo-details",
         "get-photo-preview",
+        "get-trip-analytics",
+        "get-trip-photo-metadata",
+        "get-trip-moments",
     }
     assert server.server.create_initialization_options().capabilities.tools is not None
     assert server.photos_loader._future is None

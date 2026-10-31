@@ -28,7 +28,7 @@ async def test_real_stdio_discovery_calls_and_images(tmp_path, denied):
         init = await session.initialize()
         assert init.capabilities.tools is not None
         definitions = await session.list_tools()
-        assert len(definitions.tools) == 6
+        assert len(definitions.tools) == 9
         assert not marker.exists()
         invalid = await session.call_tool("people-search", {})
         assert invalid.isError and not marker.exists()
@@ -45,7 +45,7 @@ async def test_real_stdio_discovery_calls_and_images(tmp_path, denied):
         if denied:
             assert response.isError
             assert "macOS denied" in response.content[0].text
-            assert len((await session.list_tools()).tools) == 6
+            assert len((await session.list_tools()).tools) == 9
             return
         assert not response.isError
         page = response.structuredContent
@@ -61,6 +61,17 @@ async def test_real_stdio_discovery_calls_and_images(tmp_path, denied):
             assert not result.isError and result.structuredContent["total"] > 0
         details = await session.call_tool("get-photo-details", {"uuid": uuid})
         assert not details.isError and details.structuredContent["uuid"] == uuid
+        assert details.structuredContent["location"] is None
+        assert details.structuredContent["persons"] == []
+        assert "original_path" not in details.structuredContent
+        trip = {"start_date": "2026-10-24", "end_date": "2026-10-30"}
+        summary = await session.call_tool("get-trip-analytics", trip)
+        assert not summary.isError and summary.structuredContent["scope"]["photos"] == 4
+        metadata = await session.call_tool("get-trip-photo-metadata", {**trip, "limit": 1})
+        assert not metadata.isError and metadata.structuredContent["returned"] == 1
+        assert "city" not in metadata.structuredContent["items"][0]
+        moments = await session.call_tool("get-trip-moments", {**trip, "kind": "sessions"})
+        assert not moments.isError and moments.structuredContent["total"] > 0
         result = await session.call_tool("get-photo-preview", {"uuid": uuid, "max_dimension": 256})
         assert not result.isError
         block = next(block for block in result.content if block.type == "image")

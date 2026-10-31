@@ -1,0 +1,1536 @@
+<div id="trip-explorer">
+  <header class="tx-header">
+    <h1>Your trip, frame by frame</h1>
+    <p id="tx-scope"></p>
+  </header>
+  <div class="nav nav-pills" role="tablist" aria-label="Trip explorer">
+    <button
+      class="nav-link active"
+      type="button"
+      role="tab"
+      id="tx-tab-journey"
+      aria-selected="true"
+      aria-controls="tx-journey"
+    >
+      Journey
+    </button>
+    <button
+      class="nav-link"
+      type="button"
+      role="tab"
+      id="tx-tab-family"
+      aria-selected="false"
+      aria-controls="tx-family"
+    >
+      Family
+    </button>
+    <button
+      class="nav-link"
+      type="button"
+      role="tab"
+      id="tx-tab-compare"
+      aria-selected="false"
+      aria-controls="tx-compare"
+    >
+      Compare shots
+    </button>
+    <button
+      class="nav-link"
+      type="button"
+      role="tab"
+      id="tx-tab-camera"
+      aria-selected="false"
+      aria-controls="tx-camera"
+    >
+      Camera
+    </button>
+    <button
+      class="nav-link"
+      type="button"
+      role="tab"
+      id="tx-tab-carousel"
+      aria-selected="false"
+      aria-controls="tx-carousel"
+    >
+      Carousel
+    </button>
+    <button
+      class="nav-link"
+      type="button"
+      role="tab"
+      id="tx-tab-motion"
+      aria-selected="false"
+      aria-controls="tx-motion"
+    >
+      Motion
+    </button>
+    <button
+      class="nav-link"
+      type="button"
+      role="tab"
+      id="tx-tab-archive"
+      aria-selected="false"
+      aria-controls="tx-archive"
+    >
+      Archive
+    </button>
+  </div>
+  <section id="tx-journey" role="tabpanel" aria-labelledby="tx-tab-journey">
+    <div id="tx-hero" class="tx-photo-strip"></div>
+    <div class="tx-two">
+      <div>
+        <h2>Places in your photos</h2>
+        <div id="tx-map"></div>
+        <p class="text-small">
+          Public city centres. Connections show photo order, not a recorded
+          travel route. Map: Natural Earth / GeoNames.
+        </p>
+      </div>
+      <div>
+        <h2>Days of the trip</h2>
+        <div id="tx-daily"></div>
+        <p id="tx-day-detail" class="text-small" aria-live="polite"></p>
+      </div>
+    </div>
+    <h2>When you reached for the camera</h2>
+    <div id="tx-heatmap"></div>
+    <p id="tx-rhythm" class="text-small"></p>
+    <div class="tx-field">
+      <label class="form-label"
+        >Capture session<span class="tx-control"
+          ><select id="tx-session" class="form-select"></select></span
+      ></label>
+    </div>
+    <p id="tx-session-detail" class="text-small" aria-live="polite"></p>
+    <div id="tx-session-gallery" class="tx-gallery"></div>
+    <div id="tx-session-pager" class="viz-controls"></div>
+    <h2>Scenes that kept appearing</h2>
+    <div id="tx-theme-buttons" class="viz-controls"></div>
+    <div id="tx-theme-gallery" class="tx-gallery"></div>
+    <p class="text-small">
+      Existing Photos scene labels; categories overlap and can be wrong.
+    </p>
+  </section>
+  <section
+    id="tx-family"
+    role="tabpanel"
+    aria-labelledby="tx-tab-family"
+    hidden
+  >
+    <h2>Family moments across the week</h2>
+    <div id="tx-family-chart"></div>
+    <div id="tx-family-buttons" class="viz-controls"></div>
+    <p id="tx-family-detail" aria-live="polite"></p>
+    <h2>Where these moments were</h2>
+    <div id="tx-family-places"></div>
+    <div id="tx-family-gallery" class="tx-gallery"></div>
+    <div id="tx-family-pager" class="viz-controls"></div>
+    <p class="text-small">
+      Counts use existing, explicitly selected name tags. An absent tag does not
+      mean the person is absent.
+    </p>
+  </section>
+  <section
+    id="tx-compare"
+    role="tabpanel"
+    aria-labelledby="tx-tab-compare"
+    hidden
+  >
+    <h2>Find your keeper</h2>
+    <div class="viz-controls">
+      <div class="tx-field">
+        <label class="form-label"
+          >Compare by<span class="tx-control"
+            ><select id="tx-compare-mode" class="form-select">
+              <option value="rapid">Rapid-shot stacks</option>
+              <option value="similar">Similar preview candidates</option>
+              <option value="score">Photos' overall score</option>
+              <option value="kept">Your keepers</option>
+            </select></span
+          ></label
+        >
+      </div>
+      <div class="tx-field" id="tx-stack-label">
+        <label class="form-label"
+          >Stack<span class="tx-control"
+            ><select id="tx-stack" class="form-select"></select></span
+        ></label>
+      </div>
+    </div>
+    <p id="tx-compare-detail" aria-live="polite"></p>
+    <div id="tx-compare-gallery" class="tx-gallery"></div>
+    <p class="text-small">
+      Time proximity and 64-bit preview hashes suggest comparisons, not
+      confirmed duplicates. Photos' aesthetic scores are undocumented hints, not
+      a verdict on the best image.
+    </p>
+  </section>
+  <section
+    id="tx-camera"
+    role="tabpanel"
+    aria-labelledby="tx-tab-camera"
+    hidden
+  >
+    <div class="tx-two">
+      <div>
+        <h2>Lens choices</h2>
+        <div id="tx-lenses"></div>
+      </div>
+      <div>
+        <h2>Modes and framing</h2>
+        <div id="tx-modes"></div>
+      </div>
+    </div>
+    <h2>Camera settings in context</h2>
+    <div id="tx-settings"></div>
+    <p id="tx-setting-detail" class="text-small" aria-live="polite"></p>
+    <div class="viz-controls">
+      <div class="tx-field">
+        <label class="form-label"
+          >Browse lens<span class="tx-control"
+            ><select id="tx-lens-filter" class="form-select"></select></span
+        ></label>
+      </div>
+      <div class="tx-field">
+        <label class="form-label"
+          >Browse mode<span class="tx-control"
+            ><select id="tx-mode-filter" class="form-select">
+              <option value="all">All modes</option>
+              <option value="portrait">Portrait mode</option>
+              <option value="selfie">Selfies</option>
+              <option value="live_photo">Live Photos</option>
+              <option value="edited">Edited photos</option>
+              <option value="vertical">Vertical frames</option>
+              <option value="horizontal">Horizontal frames</option>
+            </select></span
+          ></label
+        >
+      </div>
+    </div>
+    <div id="tx-camera-gallery" class="tx-gallery"></div>
+    <div id="tx-camera-pager" class="viz-controls"></div>
+  </section>
+  <section
+    id="tx-carousel"
+    role="tabpanel"
+    aria-labelledby="tx-tab-carousel"
+    hidden
+  >
+    <h2>Your carousel, ready to frame</h2>
+    <div class="viz-controls">
+      <div class="tx-field">
+        <label class="form-label"
+          >Preview crop<span class="tx-control"
+            ><select id="tx-crop" class="form-select">
+              <option value="original">Original framing</option>
+              <option value="0.8">4:5 vertical</option>
+              <option value="1">1:1 square</option>
+              <option value="0.5625">9:16 story</option>
+            </select></span
+          ></label
+        >
+      </div>
+      <button type="button" class="btn" id="tx-restore-carousel">
+        Restore original order
+      </button>
+    </div>
+    <p id="tx-carousel-detail" aria-live="polite"></p>
+    <div id="tx-carousel-gallery" class="tx-gallery"></div>
+    <h2>Collection crop trade-offs</h2>
+    <div id="tx-crop-chart"></div>
+    <p class="text-small">
+      Retained area describes a centred fill crop, not whether the subject fits.
+      Moving a preview changes this journal only; originals stay intact.
+    </p>
+  </section>
+  <section
+    id="tx-motion"
+    role="tabpanel"
+    aria-labelledby="tx-tab-motion"
+    hidden
+  >
+    <h2>A trip that moves</h2>
+    <p id="tx-motion-detail"></p>
+    <div class="viz-controls">
+      <div class="tx-field">
+        <label class="form-label"
+          >Browse<span class="tx-control"
+            ><select id="tx-motion-kind" class="form-select">
+              <option value="live">Local Live Photo motion</option>
+              <option value="video">Standalone videos</option>
+              <option value="plan">Your film plan</option>
+            </select></span
+          ></label
+        >
+      </div>
+    </div>
+    <div id="tx-motion-gallery" class="tx-gallery"></div>
+    <div id="tx-motion-pager" class="viz-controls"></div>
+    <p id="tx-film-plan" aria-live="polite"></p>
+    <div class="viz-controls">
+      <div class="tx-field">
+        <label class="form-label"
+          >Soundtrack<span class="tx-control"
+            ><select id="tx-film-music" class="form-select">
+              <option value="energy">Travel energy</option>
+              <option value="none">No music</option>
+            </select></span
+          ></label
+        >
+      </div>
+      <div class="tx-field">
+        <label class="form-label"
+          >Pace<span class="tx-control"
+            ><select id="tx-film-pace" class="form-select">
+              <option value="fast">Fast</option>
+              <option value="balanced">Balanced</option>
+            </select></span
+          ></label
+        >
+      </div>
+      <button type="button" class="btn btn-primary" id="tx-render-film" hidden>
+        Regenerate video
+      </button>
+      <button type="button" class="btn" id="tx-export-plan">
+        Export motion plan
+      </button>
+    </div>
+    <p id="tx-render-status" role="status" aria-live="polite"></p>
+    <div id="tx-render-preview" class="tx-render-preview"></div>
+    <p class="text-small">
+      Downloads from iCloud stay under your control. The local editor renders
+      new copies and keeps your originals intact.
+    </p>
+  </section>
+  <section
+    id="tx-archive"
+    role="tabpanel"
+    aria-labelledby="tx-tab-archive"
+    hidden
+  >
+    <h2>Edits and your shortlist</h2>
+    <div id="tx-funnel"></div>
+    <h2>Original media size</h2>
+    <div id="tx-storage"></div>
+    <div id="tx-archive-table" class="table-responsive"></div>
+    <h2>Metadata coverage</h2>
+    <div id="tx-coverage"></div>
+    <p class="text-small">
+      Byte counts exclude Live Photo motion companions, edits and caches.
+      Availability is a snapshot. The date window can contain other places or
+      unlocated assets outside this selection.
+    </p>
+  </section>
+</div>
+<style>
+  #trip-explorer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: calc(var(--font-size-base) * 1.1);
+  }
+  #trip-explorer .tx-header {
+    padding-inline-end: 90px;
+    display: grid;
+    gap: calc(var(--font-size-base) * 0.35);
+  }
+  #trip-explorer section {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: calc(var(--font-size-base) * 0.8);
+    min-width: 0;
+  }
+  #trip-explorer section[hidden] {
+    display: none;
+  }
+  #trip-explorer .tx-control {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-width: 0;
+  }
+  #trip-explorer .tx-field {
+    min-width: 0;
+    max-width: 100%;
+    flex: 1 1 240px;
+  }
+  #trip-explorer .tx-field[hidden] {
+    display: none;
+  }
+  #trip-explorer .tx-two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: calc(var(--font-size-base) * 1.5);
+  }
+  #trip-explorer .tx-two > div {
+    min-width: 0;
+    display: grid;
+    align-content: start;
+    gap: calc(var(--font-size-base) * 0.5);
+  }
+  #trip-explorer .tx-photo-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: calc(var(--font-size-base) * 0.5);
+  }
+  #trip-explorer .tx-photo-strip img {
+    width: 100%;
+    aspect-ratio: 1.5;
+    object-fit: cover;
+  }
+  #trip-explorer .tx-gallery {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: calc(var(--font-size-base) * 1);
+  }
+  #trip-explorer figure {
+    margin: 0;
+    min-width: 0;
+    display: grid;
+    gap: calc(var(--font-size-base) * 0.4);
+    align-content: start;
+  }
+  #trip-explorer .tx-frame {
+    width: 100%;
+    aspect-ratio: 1;
+    overflow: hidden;
+    background: var(--muted);
+    display: grid;
+    place-items: center;
+  }
+  #trip-explorer .tx-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  #trip-explorer .tx-frame.tx-cropped img {
+    object-fit: cover;
+  }
+  #trip-explorer figcaption {
+    overflow-wrap: anywhere;
+    display: grid;
+    gap: calc(var(--font-size-base) * 0.25);
+  }
+  #trip-explorer .tx-axes text,
+  #trip-explorer .tx-chart text {
+    fill: var(--foreground);
+    font-size: 12px;
+  }
+  #trip-explorer .tx-chart {
+    display: block;
+    width: 100%;
+    overflow: visible;
+  }
+  #trip-explorer .tx-chart .domain,
+  #trip-explorer .tx-chart .tick line {
+    stroke: var(--border);
+  }
+  #trip-explorer .tx-chart .axis-title {
+    font-weight: 500;
+  }
+  #trip-explorer .tx-pager-info {
+    min-width: 0;
+  }
+  @media (max-width: 620px) {
+    #trip-explorer .tx-two {
+      grid-template-columns: 1fr;
+    }
+    #trip-explorer .tx-gallery {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 370px) {
+    #trip-explorer .tx-gallery {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script>
+  (() => {
+    const root = document.getElementById("trip-explorer"),
+      D = /*TRIP_DATA*/ null;
+    if (!D) {
+      root.textContent =
+        "Generate a report with trip_report.py to load a photo selection.";
+      return;
+    }
+    D.records = D.records.map((row) =>
+      Array.isArray(row)
+        ? Object.fromEntries(D.record_keys.map((key, i) => [key, row[i]]))
+        : row,
+    );
+    const photos = D.records.filter((r) => r.media_type === "photo"),
+      videos = D.records.filter((r) => r.media_type === "video"),
+      byId = new Map(D.records.map((r) => [r.uuid, r]));
+    const A = D.aggregate,
+      people = Object.keys(A.family),
+      validIds = new Set(photos.map((r) => r.uuid)),
+      $ = (id) => root.querySelector("#tx-" + id);
+    const S = {
+      tab: "journey",
+      session: -1,
+      sessionPage: 0,
+      person: people[0] || "",
+      familyPage: 0,
+      theme: "Water",
+      compare: "rapid",
+      stack: 0,
+      keepers: [],
+      lens: "all",
+      mode: "all",
+      cameraPage: 0,
+      crop: "original",
+      carousel: [...D.shortlist],
+      positions: {},
+      motion: "live",
+      motionPage: 0,
+      film: [...(D.film_plan || D.shortlist)],
+    };
+    const safe = (value) =>
+      String(value ?? "").replace(
+        /[&<>"']/g,
+        (c) =>
+          ({
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          })[c],
+      );
+    const fmt = (n) =>
+        Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 1 }),
+      day = (s) =>
+        new Intl.DateTimeFormat("en", {
+          day: "numeric",
+          month: "short",
+          timeZone: "UTC",
+        }).format(new Date(s.slice(0, 10) + "T12:00:00Z")),
+      clock = (s) => s.slice(11, 19);
+    const lensName = (r) => {
+      const s = r.lens || "";
+      return s.includes("front")
+        ? "Front"
+        : s.includes("2.22mm")
+          ? "Ultrawide"
+          : s.includes("16.891mm")
+            ? "Telephoto"
+            : s.includes("6.765mm")
+              ? "Main"
+              : s || "Unknown";
+    };
+    const personLabel = (n) => n;
+    function stateSave() {
+      if (window.openai?.setWidgetState) {
+        const snapshot = {
+          modelContent: {
+            view: S.tab,
+            date_scope: [A.scope.start_date, A.scope.end_date],
+            keeper_count: S.keepers.length,
+            carousel: S.carousel,
+            film_clips: S.film.length,
+          },
+          privateContent: { tripExplorer: S },
+        };
+        if (new TextEncoder().encode(JSON.stringify(snapshot)).length > 15000) {
+          snapshot.privateContent = {
+            tripExplorer: {
+              ...S,
+              keepers: S.keepers.slice(-100),
+              film: S.film.slice(-100),
+              positions: {},
+            },
+          };
+          if (new TextEncoder().encode(JSON.stringify(snapshot)).length > 15000)
+            snapshot.privateContent = null;
+        }
+        window.openai.setWidgetState(snapshot).catch(() => {});
+      }
+      root.dispatchEvent(
+        new CustomEvent("trip:plan-change", { detail: motionPlan() }),
+      );
+    }
+    function motionPlan() {
+      return {
+        schema_version: 1,
+        start_date: A.scope.start_date,
+        end_date: A.scope.end_date,
+        timezone: D.scope.timezone,
+        uuids: [...S.film],
+      };
+    }
+    function restore(value) {
+      const v = value?.privateContent?.tripExplorer;
+      if (!v || typeof v !== "object") return;
+      for (const key of [
+        "person",
+        "theme",
+        "compare",
+        "lens",
+        "mode",
+        "crop",
+        "motion",
+      ])
+        if (typeof v[key] === "string") S[key] = v[key];
+      if (typeof v.tab === "string" && $("tab-" + v.tab)) S.tab = v.tab;
+      for (const key of ["keepers", "carousel", "film"])
+        if (Array.isArray(v[key]))
+          S[key] = [
+            ...new Set(
+              v[key].filter((u) =>
+                key === "film" ? byId.has(u) : validIds.has(u),
+              ),
+            ),
+          ].slice(0, key === "keepers" ? 352 : key === "film" ? 100 : 30);
+      if (v.positions && typeof v.positions === "object") {
+        S.positions = {};
+        for (const [u, p] of Object.entries(v.positions))
+          if (
+            validIds.has(u) &&
+            Array.isArray(p) &&
+            p.length === 2 &&
+            p.every(
+              (n) =>
+                typeof n === "number" &&
+                Number.isFinite(n) &&
+                n >= 0 &&
+                n <= 100,
+            )
+          )
+            S.positions[u] = p;
+      }
+    }
+    restore(window.openai?.widgetState);
+    function svgFor(id, height, title) {
+      const el = $(id),
+        width = Math.max(260, el.getBoundingClientRect().width);
+      el.replaceChildren();
+      const svg = d3
+        .select(el)
+        .append("svg")
+        .attr("class", "tx-chart")
+        .attr("viewBox", `0 0 ${width} ${height}`)
+        .attr("role", "img")
+        .attr("aria-label", title);
+      svg.append("title").text(title);
+      return { svg, width, height };
+    }
+    function bars(
+      id,
+      entries,
+      {
+        unit = "photos",
+        label = "Category",
+        height = 230,
+        onClick = null,
+      } = {},
+    ) {
+      const rows = entries.map(([name, value]) => ({ name, value }));
+      if (!rows.length) {
+        $(id).textContent = "No metadata available for this selection.";
+        return;
+      }
+      const { svg, width } = svgFor(
+          id,
+          height,
+          `${label}: ${rows.map((r) => r.name + " " + fmt(r.value)).join(", ")}`,
+        ),
+        left = Math.min(150, Math.max(90, width * 0.4)),
+        right = 40,
+        top = 15,
+        bottom = 42;
+      const x = d3
+          .scaleLinear()
+          .domain([
+            0,
+            Math.max(
+              1,
+              d3.max(rows, (r) => r.value),
+            ) * 1.08,
+          ])
+          .range([left, width - right]),
+        y = d3
+          .scaleBand()
+          .domain(rows.map((r) => r.name))
+          .range([top, height - bottom])
+          .padding(0.25);
+      svg
+        .append("rect")
+        .attr("data-chart-frame", "")
+        .attr("x", left)
+        .attr("y", top)
+        .attr("width", width - left - right)
+        .attr("height", height - top - bottom)
+        .attr("fill", "none")
+        .attr("stroke", "var(--border)");
+      svg
+        .append("g")
+        .attr("transform", `translate(0,${height - bottom})`)
+        .call(
+          d3
+            .axisBottom(x)
+            .ticks(width < 400 ? 3 : 5)
+            .tickSizeOuter(0),
+        );
+      rows.forEach((r) => {
+        const yy = y(r.name),
+          g = svg.append("g");
+        g.append("text")
+          .attr("x", left - 8)
+          .attr("y", yy + y.bandwidth() / 2 + 4)
+          .attr("text-anchor", "end")
+          .text(r.name);
+        g.append("rect")
+          .attr("x", left)
+          .attr("y", yy)
+          .attr("width", Math.max(0, x(r.value) - left))
+          .attr("height", y.bandwidth())
+          .attr("fill", "var(--viz-series-1)")
+          .attr("data-tooltip", `${r.name}: ${fmt(r.value)} ${unit}`);
+        g.append("text")
+          .attr("x", x(r.value) + 5)
+          .attr("y", yy + y.bandwidth() / 2 + 4)
+          .text(fmt(r.value));
+        if (onClick) g.on("click", () => onClick(r));
+      });
+      svg
+        .append("text")
+        .attr("class", "axis-title")
+        .attr("data-axis", "x")
+        .attr("x", (left + width - right) / 2)
+        .attr("y", height - 4)
+        .attr("text-anchor", "middle")
+        .text(unit);
+      svg
+        .append("text")
+        .attr("class", "axis-title")
+        .attr("data-axis", "y")
+        .attr("x", 0)
+        .attr("y", 11)
+        .text(label);
+    }
+    function gallery(
+      id,
+      rows,
+      { kind = "", larger = false, crop = null } = {},
+    ) {
+      $(id).innerHTML = rows
+        .map((r, i) => {
+          const image =
+            (larger && D.carousel_images[r.uuid]) || D.thumbnails[r.uuid];
+          const ratio = crop && crop !== "original" ? Number(crop) : null;
+          const pos = S.positions[r.uuid] || [50, 50];
+          const dimensions =
+            r.display_width && r.display_height
+              ? [r.display_width, r.display_height]
+              : [r.width, r.height];
+          const retained =
+            ratio && dimensions[0]
+              ? Math.min(
+                  dimensions[0] / dimensions[1] / ratio,
+                  ratio / (dimensions[0] / dimensions[1]),
+                )
+              : 1;
+          const info = [
+            day(r.day),
+            r.place_group || r.city || "",
+            r.media_type === "video"
+              ? `${fmt(r.duration_seconds)}s`
+              : lensName(r),
+          ]
+            .filter(Boolean)
+            .join(" · ");
+          let buttons = "";
+          if (kind === "keep")
+            buttons = `<button class="btn" type="button" data-keep="${safe(r.uuid)}" aria-pressed="${S.keepers.includes(r.uuid)}">${S.keepers.includes(r.uuid) ? "Kept" : "Keep candidate"}</button>`;
+          if (kind === "motion")
+            buttons = `<button class="btn" type="button" data-film="${safe(r.uuid)}" aria-pressed="${S.film.includes(r.uuid)}">${S.film.includes(r.uuid) ? "Remove from plan" : "Add to plan"}</button>`;
+          if (kind === "carousel")
+            buttons = `<div class="viz-row"><button type="button" class="btn" data-move="${safe(r.uuid)}" data-delta="-1" ${i === 0 ? "disabled" : ""} aria-label="Move ${safe(r.filename)} earlier">Earlier</button><button type="button" class="btn" data-move="${safe(r.uuid)}" data-delta="1" ${i === rows.length - 1 ? "disabled" : ""} aria-label="Move ${safe(r.filename)} later">Later</button></div>${ratio ? `<span class="text-small">${Math.round(retained * 100)}% area retained</span><label class="form-label">Crop position<input class="form-range" type="range" min="0" max="100" value="${dimensions[0] / dimensions[1] > ratio ? pos[0] : pos[1]}" data-position="${safe(r.uuid)}" data-axis="${dimensions[0] / dimensions[1] > ratio ? 0 : 1}" aria-label="Crop position for ${safe(r.filename)}"></label>` : ""}`;
+          const score =
+            kind === "keep" && r.scores?.overall != null
+              ? `<span class="text-small">Photos overall ${r.scores.overall.toFixed(3)}</span>`
+              : "";
+          return `<figure><div class="tx-frame ${ratio ? "tx-cropped" : ""}" ${ratio ? `style="aspect-ratio:${ratio}"` : ""}>${image ? `<img src="${image}" alt="${safe(r.filename)}" loading="lazy" style="object-position:${pos[0]}% ${pos[1]}%">` : `<span>${r.media_type === "video" ? "Video original in iCloud" : "No local preview"}</span>`}</div><figcaption><span>${kind === "carousel" ? i + 1 + ". " : ""}${safe(r.filename)}</span><span class="text-small">${safe(info)}</span>${kind === "motion" ? `<span class="text-small">${r.media_type === "video" ? (r.original_available ? "Original available" : "Download needed") : "Local motion available"}</span>` : ""}${score}${buttons}</figcaption></figure>`;
+        })
+        .join("");
+      if (!rows.length) $(id).textContent = "No photos match this selection.";
+    }
+    function pager(id, page, total, callback) {
+      const pages = Math.ceil(total / 12);
+      $(id).innerHTML =
+        pages > 1
+          ? `<button type="button" class="btn" data-page="-1" ${page === 0 ? "disabled" : ""}>Previous</button><span class="text-small tx-pager-info">${page + 1} / ${pages} · ${total} items</span><button type="button" class="btn" data-page="1" ${page >= pages - 1 ? "disabled" : ""}>Next</button>`
+          : `<span class="text-small">${total} items</span>`;
+      $(id)
+        .querySelectorAll("button")
+        .forEach(
+          (b) => (b.onclick = () => callback(page + Number(b.dataset.page))),
+        );
+    }
+    function drawMap() {
+      if (!D.map?.geometry) {
+        $("map").textContent =
+          "City map is available when public city-centre geometry is supplied. No photo GPS is used.";
+        return;
+      }
+      const { svg, width, height } = svgFor(
+          "map",
+          300,
+          "Trip cities on a public city-centre map; not a GPS trace",
+        ),
+        geo = D.map.geometry,
+        fc = geo.states;
+      const projection = d3.geoMercator().fitExtent(
+          [
+            [10, 10],
+            [width - 10, height - 10],
+          ],
+          fc,
+        ),
+        path = d3.geoPath(projection);
+      svg
+        .selectAll("path.tx-state")
+        .data(fc.features)
+        .join("path")
+        .attr("d", path)
+        .attr("fill", "var(--muted)")
+        .attr("stroke", "var(--border)");
+      svg
+        .selectAll("path.tx-river")
+        .data(geo.rivers.features)
+        .join("path")
+        .attr("d", path)
+        .attr("fill", "none")
+        .attr("stroke", "var(--viz-series-2)")
+        .attr("stroke-width", 1);
+      const cities = D.map.cities;
+      svg
+        .append("path")
+        .datum(cities)
+        .attr(
+          "d",
+          d3
+            .line()
+            .x((c) => projection(c.coordinates)[0])
+            .y((c) => projection(c.coordinates)[1]),
+        )
+        .attr("fill", "none")
+        .attr("stroke", "var(--foreground)")
+        .attr("stroke-dasharray", "3 5");
+      cities.forEach((city, i) => {
+        const [x, y] = projection(city.coordinates);
+        svg
+          .append("circle")
+          .attr("cx", x)
+          .attr("cy", y)
+          .attr("r", 5)
+          .attr("fill", "var(--viz-series-1)")
+          .attr("data-tooltip", `${city.name}: ${city.photos} photos`);
+        const dx = i === 1 ? 12 : i === 2 ? -10 : 10;
+        svg
+          .append("text")
+          .attr("x", x + dx)
+          .attr("y", y + (i === 1 ? 17 : -10))
+          .attr("text-anchor", i === 2 ? "end" : "start")
+          .text(city.name);
+      });
+    }
+    function heatmap(id, names, counts, title) {
+      const { svg, width, height } = svgFor(
+          id,
+          Math.max(175, names.length * 32 + 75),
+          title,
+        ),
+        left = Math.min(
+          150,
+          Math.max(80, (d3.max(names, (n) => String(n).length) || 0) * 7 + 15),
+        ),
+        right = 10,
+        top = 25,
+        bottom = 42,
+        days = A.daily.map((d) => d.day),
+        x = d3
+          .scaleBand()
+          .domain(days)
+          .range([left, width - right])
+          .padding(0.1),
+        y = d3
+          .scaleBand()
+          .domain(names)
+          .range([top, height - bottom])
+          .padding(0.15),
+        max = Math.max(1, ...counts.map((r) => r.value));
+      svg
+        .append("rect")
+        .attr("data-chart-frame", "")
+        .attr("x", left)
+        .attr("y", top)
+        .attr("width", width - left - right)
+        .attr("height", height - top - bottom)
+        .attr("fill", "none")
+        .attr("stroke", "var(--border)");
+      counts.forEach((r) => {
+        svg
+          .append("rect")
+          .attr("x", x(r.day))
+          .attr("y", y(r.name))
+          .attr("width", x.bandwidth())
+          .attr("height", y.bandwidth())
+          .attr("fill", "var(--viz-series-1)")
+          .attr("opacity", r.value ? 0.2 + (0.8 * r.value) / max : 0.035)
+          .attr("data-tooltip", `${r.name}, ${day(r.day)}: ${r.value} photos`);
+        if (x.bandwidth() > 25 && y.bandwidth() > 20)
+          svg
+            .append("text")
+            .attr("x", x(r.day) + x.bandwidth() / 2)
+            .attr("y", y(r.name) + y.bandwidth() / 2 + 4)
+            .attr("text-anchor", "middle")
+            .text(r.value || "");
+      });
+      names.forEach((n) =>
+        svg
+          .append("text")
+          .attr("x", left - 8)
+          .attr("y", y(n) + y.bandwidth() / 2 + 4)
+          .attr("text-anchor", "end")
+          .attr("data-tooltip", n)
+          .attr("aria-label", n)
+          .text(n.length > 18 ? n.slice(0, 17) + "…" : n),
+      );
+      days.forEach((d, i) => {
+        if (width > 430 || i % 2 === 0)
+          svg
+            .append("text")
+            .attr("x", x(d) + x.bandwidth() / 2)
+            .attr("y", height - bottom + 18)
+            .attr("text-anchor", "middle")
+            .text(day(d));
+      });
+      svg
+        .append("text")
+        .attr("class", "axis-title")
+        .attr("data-axis", "x")
+        .attr("x", (left + width - right) / 2)
+        .attr("y", height - 2)
+        .attr("text-anchor", "middle")
+        .text("Capture date");
+      svg
+        .append("text")
+        .attr("class", "axis-title")
+        .attr("data-axis", "y")
+        .attr("x", 0)
+        .attr("y", 12)
+        .text(id === "family-chart" ? "Person" : "Hour (local)");
+    }
+    function showSession() {
+      const group = D.sessions[S.session];
+      if (!group) {
+        $("session-detail").textContent =
+          "Select a session to browse its captures.";
+        $("session-gallery").replaceChildren();
+        $("session-pager").replaceChildren();
+        return;
+      }
+      const rows = group.uuids.map((u) => byId.get(u)).filter(Boolean);
+      $("session-detail").textContent =
+        `${day(group.start.slice(0, 10))} ${clock(group.start)}–${clock(group.end)} · ${rows.length} photos`;
+      gallery(
+        "session-gallery",
+        rows.slice(S.sessionPage * 12, S.sessionPage * 12 + 12),
+      );
+      pager("session-pager", S.sessionPage, rows.length, (p) => {
+        S.sessionPage = p;
+        showSession();
+        stateSave();
+      });
+    }
+    function journey() {
+      gallery(
+        "hero",
+        D.shortlist
+          .slice(0, 3)
+          .map((u) => byId.get(u))
+          .filter(Boolean),
+        { larger: true },
+      );
+      drawMap();
+      bars(
+        "daily",
+        A.daily.map((d) => [day(d.day), d.photos]),
+        {
+          label: "Capture date",
+          height: 300,
+          onClick: (r) => {
+            $("day-detail").textContent = `${r.name}: ${r.value} photos`;
+          },
+        },
+      );
+      const hours = Array.from(
+          { length: 8 },
+          (_, i) =>
+            `${String(i * 3).padStart(2, "0")}–${String(i * 3 + 2).padStart(2, "0")}`,
+        ),
+        counts = A.daily.flatMap((d) =>
+          hours.map((h, i) => ({
+            day: d.day,
+            name: h,
+            value: photos.filter(
+              (r) => r.day === d.day && Math.floor(r.hour / 3) === i,
+            ).length,
+          })),
+        );
+      heatmap(
+        "heatmap",
+        hours,
+        counts,
+        "Photo captures by day and three-hour interval",
+      );
+      $("rhythm").textContent =
+        `${A.sessions.count} capture sessions using gaps over ${A.sessions.gap_minutes} minutes; ${A.retakes.stacks} rapid-shot stacks. Photo frequency does not measure time spent.`;
+      $("session").innerHTML =
+        '<option value="-1">Choose a capture session</option>' +
+        D.sessions
+          .map(
+            (g, i) =>
+              `<option value="${i}">${day(g.start.slice(0, 10))} ${clock(g.start)} · ${g.uuids.length} photos</option>`,
+          )
+          .join("");
+      $("session").value = String(S.session);
+      showSession();
+      const themes = [
+        "Water",
+        "Hill",
+        "People",
+        "Outdoor",
+        "Building",
+        "Plant",
+      ].filter((t) => A.themes[t]);
+      if (!themes.includes(S.theme)) S.theme = themes[0];
+      $("theme-buttons").innerHTML = themes
+        .map(
+          (t) =>
+            `<button class="btn" type="button" data-theme="${t}" aria-pressed="${t === S.theme}">${t} (${A.themes[t]})</button>`,
+        )
+        .join("");
+      gallery(
+        "theme-gallery",
+        photos.filter((r) => (r.labels || []).includes(S.theme)).slice(0, 9),
+      );
+    }
+    function family() {
+      if (!people.length) {
+        $("family-chart").textContent =
+          "No person names were selected or permitted by the host.";
+        $("family-detail").textContent =
+          "Generate with explicitly allowed person names to explore family coverage.";
+        return;
+      }
+      heatmap(
+        "family-chart",
+        people.map(personLabel),
+        people.flatMap((n) =>
+          A.daily.map((d) => ({
+            name: personLabel(n),
+            day: d.day,
+            value: A.family[n].by_day[d.day] || 0,
+          })),
+        ),
+        "Family photo tags across the week",
+      );
+      $("family-buttons").innerHTML = [...people, "all"]
+        .map(
+          (n) =>
+            `<button type="button" class="btn" data-person="${safe(n)}" aria-pressed="${S.person === n}">${n === "all" ? "All together" : safe(personLabel(n))} (${n === "all" ? A.all_requested_people : A.family[n].total})</button>`,
+        )
+        .join("");
+      const rows = photos.filter((r) =>
+        S.person === "all"
+          ? people.every((n) => (r.persons || []).includes(n))
+          : (r.persons || []).includes(S.person),
+      );
+      $("family-detail").textContent =
+        `${rows.length} tagged photos · ${S.person === "all" ? "All requested people" : personLabel(S.person)}`;
+      const places = {};
+      rows.forEach((r) => {
+        const place = r.place_group || r.city;
+        if (place) places[place] = (places[place] || 0) + 1;
+      });
+      bars("family-places", Object.entries(places), {
+        label: "Place",
+        height: 230,
+      });
+      gallery(
+        "family-gallery",
+        rows.slice(S.familyPage * 12, S.familyPage * 12 + 12),
+      );
+      pager("family-pager", S.familyPage, rows.length, (p) => {
+        S.familyPage = p;
+        family();
+        stateSave();
+      });
+    }
+    const distance = (a, b) => {
+      let x = BigInt("0x" + a) ^ BigInt("0x" + b),
+        n = 0;
+      while (x) {
+        x &= x - 1n;
+        n++;
+      }
+      return n;
+    };
+    const similar = [];
+    for (let i = 0; i < photos.length; i++)
+      for (let j = i + 1; j < photos.length; j++) {
+        const a = photos[i],
+          b = photos[j],
+          gap = Math.abs(Date.parse(a.date) - Date.parse(b.date)) / 1000;
+        if (
+          gap <= 60 &&
+          a.preview_hash &&
+          b.preview_hash &&
+          (a.place_group || a.city) &&
+          (a.place_group || a.city) === (b.place_group || b.city)
+        ) {
+          const d = distance(a.preview_hash, b.preview_hash);
+          if (d <= 10)
+            similar.push({
+              uuids: [a.uuid, b.uuid],
+              distance: d,
+              start: a.date,
+            });
+        }
+      }
+    similar.sort((a, b) => a.distance - b.distance);
+    function compare() {
+      const groups = S.compare === "similar" ? similar : D.rapid,
+        hasGroups = ["rapid", "similar"].includes(S.compare);
+      $("stack-label").hidden = !hasGroups;
+      S.stack = Math.min(S.stack, Math.max(0, groups.length - 1));
+      $("stack").innerHTML = groups
+        .map(
+          (g, i) =>
+            `<option value="${i}">${i + 1} · ${day(g.start.slice(0, 10))} ${clock(g.start)} · ${g.uuids.length} photos${S.compare === "similar" ? " · " + g.distance + "/64 hash distance" : ""}</option>`,
+        )
+        .join("");
+      $("stack").value = String(S.stack);
+      let rows = [];
+      if (hasGroups) {
+        rows = (groups[S.stack]?.uuids || [])
+          .map((u) => byId.get(u))
+          .filter(Boolean);
+        $("compare-detail").textContent =
+          S.compare === "rapid"
+            ? `${D.rapid.length} stacks · ${A.retakes.photos_in_stacks} photos · adjacent captures within 5 seconds`
+            : `${similar.length} candidate pairs · within 60 seconds, same place group, hash distance ≤10/64`;
+      } else if (S.compare === "kept") {
+        rows = S.keepers.map((u) => byId.get(u)).filter(Boolean);
+        $("compare-detail").textContent =
+          `${rows.length} keepers saved in this journal`;
+      } else {
+        rows = [...photos]
+          .filter((r) => r.scores?.overall != null)
+          .sort((a, b) => b.scores.overall - a.scores.overall)
+          .slice(0, 12);
+        $("compare-detail").textContent =
+          `First 12 by Photos' stored overall score · ${A.score_coverage.overall}/${photos.length} nonzero scores available`;
+      }
+      gallery("compare-gallery", rows, { kind: "keep" });
+      $("compare-mode").value = S.compare;
+    }
+    function settings() {
+      const rows = photos.filter((r) => r.iso > 0 && r.exposure_seconds > 0),
+        { svg, width, height } = svgFor(
+          "settings",
+          275,
+          "Camera exposure time versus ISO; select a point to see its photo",
+        );
+      if (!rows.length) return;
+      const left = 70,
+        right = 24,
+        top = 20,
+        bottom = 50,
+        x = d3
+          .scaleLog()
+          .domain(d3.extent(rows, (r) => r.exposure_seconds))
+          .nice()
+          .range([left + 5, width - right - 5]),
+        y = d3
+          .scaleLog()
+          .domain(d3.extent(rows, (r) => r.iso))
+          .nice()
+          .range([height - bottom - 5, top + 5]);
+      svg
+        .append("rect")
+        .attr("data-chart-frame", "")
+        .attr("x", left)
+        .attr("y", top)
+        .attr("width", width - left - right)
+        .attr("height", height - top - bottom)
+        .attr("fill", "none")
+        .attr("stroke", "var(--border)");
+      svg
+        .append("g")
+        .attr("transform", `translate(0,${height - bottom})`)
+        .call(d3.axisBottom(x).ticks(width < 400 ? 3 : 5, ".1~g"));
+      svg
+        .append("g")
+        .attr("transform", `translate(${left},0)`)
+        .call(d3.axisLeft(y).ticks(4, ".0f"));
+      svg
+        .selectAll("circle")
+        .data(rows)
+        .join("circle")
+        .attr("cx", (r) => x(r.exposure_seconds))
+        .attr("cy", (r) => y(r.iso))
+        .attr("r", 3)
+        .attr("fill", "var(--viz-series-1)")
+        .attr("opacity", 0.5)
+        .attr(
+          "data-tooltip",
+          (r) =>
+            `${r.filename}: ISO ${r.iso}, ${r.exposure_seconds.toPrecision(3)} seconds, ${lensName(r)}`,
+        )
+        .on("click", (_, r) => {
+          $("setting-detail").textContent =
+            `${r.filename}: ISO ${r.iso}, f/${r.aperture}, exposure ${r.exposure_seconds.toPrecision(3)}s`;
+          gallery("camera-gallery", [r]);
+        });
+      svg
+        .append("text")
+        .attr("class", "axis-title")
+        .attr("data-axis", "x")
+        .attr("x", (left + width - right) / 2)
+        .attr("y", height - 5)
+        .attr("text-anchor", "middle")
+        .text("Exposure time (seconds, log scale)");
+      svg
+        .append("text")
+        .attr("class", "axis-title")
+        .attr("data-axis", "y")
+        .attr("x", 0)
+        .attr("y", 12)
+        .text("ISO (log)");
+    }
+    function camera() {
+      const lensCounts = {};
+      photos.forEach(
+        (r) => (lensCounts[lensName(r)] = (lensCounts[lensName(r)] || 0) + 1),
+      );
+      bars("lenses", Object.entries(lensCounts), { label: "Lens" });
+      bars(
+        "modes",
+        [
+          ["Live Photo", A.modes.live_photo],
+          ["Portrait mode", A.modes.portrait],
+          ["Selfie", A.modes.selfie],
+          ["Vertical", A.orientations.vertical || 0],
+          ["Horizontal", A.orientations.horizontal || 0],
+        ],
+        { label: "Overlapping groups" },
+      );
+      settings();
+      $("lens-filter").innerHTML =
+        '<option value="all">All lenses</option>' +
+        Object.keys(lensCounts)
+          .map((n) => `<option value="${safe(n)}">${safe(n)}</option>`)
+          .join("");
+      $("lens-filter").value = S.lens;
+      $("mode-filter").value = S.mode;
+      const rows = photos.filter(
+        (r) =>
+          (S.lens === "all" || lensName(r) === S.lens) &&
+          (S.mode === "all" ||
+            (S.mode === "edited"
+              ? r.edited
+              : ["vertical", "horizontal"].includes(S.mode)
+                ? r.orientation === S.mode
+                : r.modes.includes(S.mode))),
+      );
+      gallery(
+        "camera-gallery",
+        rows.slice(S.cameraPage * 12, S.cameraPage * 12 + 12),
+      );
+      pager("camera-pager", S.cameraPage, rows.length, (p) => {
+        S.cameraPage = p;
+        camera();
+        stateSave();
+      });
+    }
+    function carousel() {
+      const rows = S.carousel.map((u) => byId.get(u)).filter(Boolean);
+      $("crop").value = S.crop;
+      gallery("carousel-gallery", rows, {
+        kind: "carousel",
+        larger: true,
+        crop: S.crop,
+      });
+      const familyCount = rows.filter(
+        (r) => (r.persons || []).length > 1,
+      ).length;
+      $("carousel-detail").textContent =
+        `${rows.length} slides · ${familyCount} with multiple selected family tags · ${new Set(rows.map((r) => r.place_group || r.city).filter(Boolean)).size} place groups`;
+      bars(
+        "crop-chart",
+        Object.entries(A.crops).map(([k, v]) => [
+          k,
+          Math.round(v.mean_area_retained * 100),
+        ]),
+        { label: "Target crop", unit: "mean area retained (%)", height: 190 },
+      );
+    }
+    function motion() {
+      const rows =
+        S.motion === "video"
+          ? videos
+          : S.motion === "plan"
+            ? S.film.map((u) => byId.get(u)).filter(Boolean)
+            : photos.filter((r) => r.motion_available);
+      $("motion-kind").value = S.motion;
+      const localVideos = videos.filter((r) => r.original_available).length;
+      $("motion-detail").textContent =
+        `${A.modes.live_photo} Live Photos · ${A.motion_available} local motion files · ${videos.length} videos (${fmt(A.video_duration_seconds)}s, ${localVideos} local originals)${D.film ? " · draft film " + fmt(D.film.seconds) + "s" : ""}`;
+      gallery(
+        "motion-gallery",
+        rows.slice(S.motionPage * 12, S.motionPage * 12 + 12),
+        { kind: "motion" },
+      );
+      pager("motion-pager", S.motionPage, rows.length, (p) => {
+        S.motionPage = p;
+        motion();
+        stateSave();
+      });
+      $("film-plan").textContent = `Film plan: ${S.film.length} clips · ${S.film
+        .map((u) => byId.get(u)?.filename)
+        .filter(Boolean)
+        .join(", ")}`;
+    }
+    function archive() {
+      bars(
+        "funnel",
+        [
+          ["Trip photos", photos.length],
+          ["Recorded edits", A.edited],
+          ["Carousel", S.carousel.length],
+        ],
+        { label: "Overlapping sets" },
+      );
+      bars(
+        "storage",
+        [
+          ["Photos", A.photo_original_bytes / 1e9],
+          ["Videos", A.video_original_bytes / 1e9],
+        ],
+        { label: "Media", unit: "GB (decimal)", height: 165 },
+      );
+      bars(
+        "coverage",
+        Object.entries(A.coverage).map(([k, v]) => [k.replaceAll("_", " "), v]),
+        { label: "Metadata field", height: 260 },
+      );
+      const rows = [
+        [
+          "Photo originals local",
+          `${D.records.filter((r) => r.media_type === "photo" && r.original_available).length} / ${photos.length}`,
+        ],
+        [
+          "Video originals local",
+          `${videos.filter((r) => r.original_available).length} / ${videos.length}`,
+        ],
+        [
+          "Live Photo motion local",
+          `${A.motion_available} / ${A.modes.live_photo}`,
+        ],
+        [
+          "Nonzero overall scores",
+          `${A.score_coverage.overall} / ${photos.length}`,
+        ],
+        [
+          "Other/unconfirmed date-window assets",
+          D.scope.unconfirmed_date_window_assets ?? "Not included in selection",
+        ],
+        ["Time zone", D.scope.timezone],
+      ];
+      $("archive-table").innerHTML =
+        '<table class="table table-sm"><thead><tr><th>Check</th><th>Result</th></tr></thead><tbody>' +
+        rows
+          .map(([k, v]) => `<tr><td>${safe(k)}</td><td>${safe(v)}</td></tr>`)
+          .join("") +
+        "</tbody></table>";
+    }
+    function activate(tab, save = false) {
+      S.tab = tab;
+      root.querySelectorAll('[role="tab"]').forEach((t) => {
+        const active = t.id === "tx-tab-" + tab;
+        t.setAttribute("aria-selected", String(active));
+        t.classList.toggle("active", active);
+      });
+      root
+        .querySelectorAll('[role="tabpanel"]')
+        .forEach((p) => (p.hidden = p.id !== "tx-" + tab));
+      (
+        ({ journey, family, compare, camera, carousel, motion, archive })[
+          tab
+        ] || journey
+      )();
+      if (save) stateSave();
+    }
+    root.addEventListener("click", (event) => {
+      const b = event.target.closest("button");
+      if (!b) return;
+      if (b.getAttribute("role") === "tab") {
+        activate(b.id.replace("tx-tab-", ""), true);
+        return;
+      }
+      if (b.dataset.theme) {
+        S.theme = b.dataset.theme;
+        journey();
+      } else if (b.dataset.person) {
+        S.person = b.dataset.person;
+        S.familyPage = 0;
+        family();
+      } else if (b.dataset.keep) {
+        S.keepers = S.keepers.includes(b.dataset.keep)
+          ? S.keepers.filter((u) => u !== b.dataset.keep)
+          : [...S.keepers, b.dataset.keep];
+        compare();
+      } else if (b.dataset.film) {
+        S.film = S.film.includes(b.dataset.film)
+          ? S.film.filter((u) => u !== b.dataset.film)
+          : [...S.film, b.dataset.film];
+        motion();
+      } else if (b.dataset.move) {
+        const i = S.carousel.indexOf(b.dataset.move),
+          j = i + Number(b.dataset.delta);
+        if (j >= 0 && j < S.carousel.length)
+          [S.carousel[i], S.carousel[j]] = [S.carousel[j], S.carousel[i]];
+        carousel();
+      } else if (b.id === "tx-restore-carousel") {
+        S.carousel = [...D.shortlist];
+        S.positions = {};
+        carousel();
+      } else return;
+      stateSave();
+    });
+    $("session").onchange = (e) => {
+      S.session = Number(e.target.value);
+      S.sessionPage = 0;
+      showSession();
+      stateSave();
+    };
+    $("compare-mode").onchange = (e) => {
+      S.compare = e.target.value;
+      S.stack = 0;
+      compare();
+      stateSave();
+    };
+    $("stack").onchange = (e) => {
+      S.stack = Number(e.target.value);
+      compare();
+      stateSave();
+    };
+    $("lens-filter").onchange = (e) => {
+      S.lens = e.target.value;
+      S.cameraPage = 0;
+      camera();
+      stateSave();
+    };
+    $("mode-filter").onchange = (e) => {
+      S.mode = e.target.value;
+      S.cameraPage = 0;
+      camera();
+      stateSave();
+    };
+    $("crop").onchange = (e) => {
+      S.crop = e.target.value;
+      carousel();
+      stateSave();
+    };
+    $("motion-kind").onchange = (e) => {
+      S.motion = e.target.value;
+      S.motionPage = 0;
+      motion();
+      stateSave();
+    };
+    root.addEventListener("trip:request-plan", () =>
+      root.dispatchEvent(
+        new CustomEvent("trip:plan-change", { detail: motionPlan() }),
+      ),
+    );
+    root.addEventListener("trip:set-plan", (event) => {
+      const ids = event.detail?.uuids;
+      if (
+        Array.isArray(ids) &&
+        ids.length <= 100 &&
+        ids.every((u) => byId.has(u))
+      ) {
+        S.film = [...new Set(ids)];
+        S.motionPage = 0;
+        motion();
+        stateSave();
+      }
+    });
+    root.addEventListener("trip:film-rendered", (event) => {
+      D.film = { seconds: event.detail.seconds, clips: event.detail.total };
+      motion();
+    });
+    $("export-plan").onclick = () => {
+      const url = URL.createObjectURL(
+        new Blob([JSON.stringify(motionPlan(), null, 2)], {
+          type: "application/json",
+        }),
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "trip-motion-plan.json";
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+    if (window.openai?.sendFollowUpMessage) {
+      $("render-film").hidden = false;
+      $("render-film").onclick = () =>
+        window.openai.sendFollowUpMessage({
+          title: "Regenerate trip video",
+          prompt:
+            "Regenerate my local trip film from this exact motion plan: " +
+            JSON.stringify(motionPlan()) +
+            ". Soundtrack: " +
+            $("film-music").value +
+            ". Pace: " +
+            $("film-pace").value +
+            ". Keep the plan order and show the resulting video.",
+        });
+    }
+    root.addEventListener("input", (e) => {
+      if (e.target.dataset.position) {
+        const uuid = e.target.dataset.position,
+          axis = Number(e.target.dataset.axis);
+        S.positions[uuid] ??= [50, 50];
+        S.positions[uuid][axis] = Number(e.target.value);
+        const image = e.target.closest("figure").querySelector("img");
+        if (image)
+          image.style.objectPosition = `${S.positions[uuid][0]}% ${S.positions[uuid][1]}%`;
+      }
+    });
+    root.addEventListener("change", (e) => {
+      if (e.target.dataset.position) stateSave();
+    });
+    $("scope").textContent =
+      `${A.scope.start_date} to ${A.scope.end_date} · ${photos.length} photos, ${videos.length} videos · ${D.scope.timezone}`;
+    if (typeof d3 === "undefined") {
+      root.querySelectorAll("section").forEach((p) => (p.hidden = true));
+      $("scope").textContent +=
+        " · Charts could not load. Reopen with the chart library available.";
+      return;
+    }
+    activate(S.tab);
+    let pending;
+    new ResizeObserver(() => {
+      clearTimeout(pending);
+      pending = setTimeout(() => activate(S.tab), 100);
+    }).observe(root);
+    window.addEventListener("openai:set_globals", (event) => {
+      restore(event.detail?.globals?.widgetState);
+      activate(S.tab);
+    });
+  })();
+</script>

@@ -82,7 +82,7 @@ async def test_permission_failure_is_not_reported_as_loading_forever():
 
 def test_details_use_uuid_not_duplicate_filename():
     first, second = photo(1), photo(2, path="/fixture/original.jpg")
-    details = server.get_photo_details(FixtureDB([first, second]), second.uuid)
+    details = server.get_photo_details(FixtureDB([first, second]), second.uuid, include_paths=True)
     assert details["uuid"] == second.uuid
     assert details["original_path"] == "/fixture/original.jpg"
     assert first.filename == second.filename
