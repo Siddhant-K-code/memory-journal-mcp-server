@@ -110,6 +110,19 @@ def render_film(
     duration = sum(frames) / fps
     if duration > 300:
         raise ValueError("Film exceeds five minutes. Choose fewer clips or a faster pace.")
+    music_looped = False
+    if music:
+        music_info = probe(music, ffprobe)
+        if not any(s.get("codec_type") == "audio" for s in music_info.get("streams", [])):
+            raise ValueError("The soundtrack has no audio stream.")
+        music_duration = float(music_info["format"]["duration"])
+        if (
+            not math.isfinite(music_duration)
+            or music_duration <= 0
+            or music_start >= music_duration
+        ):
+            raise ValueError("Music start must be within a nonempty soundtrack.")
+        music_looped = music_start + duration > music_duration
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
     if any(
@@ -216,6 +229,8 @@ def render_film(
             str(concat),
         ]
         if music:
+            if music_looped:
+                command += ["-stream_loop", "-1"]
             command += [
                 "-ss",
                 str(music_start),
@@ -267,6 +282,7 @@ def render_film(
         "pace": pace,
         "bpm": bpm,
         "music": credit if music else None,
+        "music_looped": music_looped,
         "music_start_seconds": music_start if music else None,
         "source_audio": "muted",
         "metadata": "Source metadata removed; optional music credit retained.",
@@ -279,7 +295,7 @@ def render_film(
             + credit.get("source", "")
             + "\nLicense: "
             + credit.get("license_url", "")
-            + "\nChanges: excerpted, normalized and faded.\n"
+            + "\nChanges: excerpted, looped if needed, normalized and faded.\n"
         )
     return result
 

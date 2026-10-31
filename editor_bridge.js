@@ -62,7 +62,7 @@
     );
   }
   function showComplete(current) {
-    status.textContent = `Ready: ${current.total} clips · ${current.seconds.toFixed(1)} seconds · 1080 × 1920`;
+    status.textContent = `Ready: ${current.total} clips · ${current.seconds.toFixed(1)} seconds · ${current.width || 1080} × ${current.height || 1920}`;
     preview.replaceChildren();
     const video = document.createElement("video");
     video.controls = true;

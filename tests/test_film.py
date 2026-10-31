@@ -1,6 +1,7 @@
 import json
 import shutil
 import subprocess
+from array import array
 
 import pytest
 
@@ -72,6 +73,15 @@ def test_editor_rejects_arbitrary_paths_unknown_music_and_parallel_jobs(tmp_path
         e.start({"plan": {"schema_version": 1, "uuids": [ONE]}, "music": "none"})
 
 
+def test_failed_plan_save_does_not_leave_a_render_queued(tmp_path):
+    e = editor(tmp_path)
+    (e.output_dir / "motion-plan.json").mkdir()
+    with pytest.raises(OSError):
+        e.start({"plan": {"schema_version": 1, "uuids": [ONE]}, "music": "none"})
+    assert e.jobs == {}
+    assert e.seed_plan is None
+
+
 def test_injected_configuration_cannot_terminate_script(tmp_path):
     e = editor(tmp_path)
     e.credit = {"title": "</script><script>bad</script>"}
@@ -85,11 +95,22 @@ def test_completed_film_remains_available_after_editor_restart(tmp_path):
     job_id = "a" * 32
     (e.output_dir / f"trip-film-{job_id}.mp4").write_bytes(b"fixture")
     (e.output_dir / f"trip-film-{job_id}.json").write_text(
-        json.dumps({"clips": [{"uuid": ONE}], "duration_seconds": 1.8, "music": None})
+        json.dumps(
+            {
+                "clips": [{"uuid": ONE}],
+                "duration_seconds": 1.8,
+                "music": None,
+                "pace": "balanced",
+                "width": 720,
+                "height": 1280,
+            }
+        )
     )
     restarted = editor(tmp_path)
     assert restarted.jobs[job_id]["status"] == "complete"
     assert restarted.jobs[job_id]["total"] == 1
+    assert restarted.jobs[job_id]["width"] == 720 and restarted.jobs[job_id]["height"] == 1280
+    assert restarted.jobs[job_id]["pace"] == "balanced"
     assert '"latest":' in restarted.page()
 
 
@@ -128,7 +149,7 @@ def test_real_ffmpeg_output_has_all_clips_and_audio_and_preserves_source(tmp_pat
             "-f",
             "lavfi",
             "-i",
-            "sine=frequency=440:duration=8",
+            "sine=frequency=440:duration=0.25",
             str(music),
         ],
         check=True,
@@ -150,6 +171,50 @@ def test_real_ffmpeg_output_has_all_clips_and_audio_and_preserves_source(tmp_pat
     assert all(r["short_motion_padded"] for r in result["clips"])
     assert abs(result["duration_seconds"] - sum(film.clip_frames(2)) / 30) < 0.1
     assert source.read_bytes() == before
+    streams = json.loads(
+        subprocess.run(
+            [
+                "ffprobe",
+                "-v",
+                "error",
+                "-show_entries",
+                "stream=codec_type,duration",
+                "-of",
+                "json",
+                str(tmp_path / "finished.mp4"),
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+    )["streams"]
+    audio = next(s for s in streams if s["codec_type"] == "audio")
+    assert float(audio["duration"]) >= result["duration_seconds"] - 0.1
+    assert result["music_looped"] is True
+    tail = subprocess.run(
+        [
+            "ffmpeg",
+            "-v",
+            "error",
+            "-ss",
+            str(result["duration_seconds"] - 1),
+            "-i",
+            str(tmp_path / "finished.mp4"),
+            "-t",
+            "0.1",
+            "-vn",
+            "-f",
+            "f32le",
+            "-ac",
+            "1",
+            "-ar",
+            "8000",
+            "pipe:1",
+        ],
+        capture_output=True,
+        check=True,
+    ).stdout
+    assert max(abs(sample) for sample in array("f", tail)) > 0.001
     assert (tmp_path / "finished.credits.txt").is_file()
     with pytest.raises(ValueError, match="already exists"):
         film.render_film(plan, index, rows, tmp_path / "finished.mp4", width=720)

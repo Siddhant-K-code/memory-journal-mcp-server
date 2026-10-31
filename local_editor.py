@@ -2,7 +2,10 @@
 
 import argparse
 import json
+import os
+import re
 import secrets
+import tempfile
 import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
@@ -12,6 +15,26 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from film import clip_frames, media_sources, render_film
+
+
+def byte_range(header, size):
+    if not header:
+        return 0, size - 1
+    match = re.fullmatch(r"bytes=(\d*)-(\d*)", header.strip())
+    if not match or not any(match.groups()) or size <= 0:
+        raise ValueError("Unsupported byte range.")
+    first, last = match.groups()
+    if first:
+        start = int(first)
+        end = min(int(last), size - 1) if last else size - 1
+    else:
+        suffix = int(last)
+        if suffix <= 0:
+            raise ValueError("Invalid suffix range.")
+        start, end = max(0, size - suffix), size - 1
+    if start >= size or end < start:
+        raise ValueError("Unsatisfiable byte range.")
+    return start, end
 
 
 class FilmEditor:
@@ -69,6 +92,9 @@ class FilmEditor:
                     "seconds": result["duration_seconds"],
                     "video_url": f"/renders/{job_id}.mp4",
                     "credit": result.get("music"),
+                    "pace": result.get("pace"),
+                    "width": result.get("width", 1080),
+                    "height": result.get("height", 1920),
                 }
             except (ValueError, KeyError, TypeError, OSError):
                 continue
@@ -99,6 +125,13 @@ class FilmEditor:
         with self.lock:
             if any(job["status"] in {"queued", "rendering"} for job in self.jobs.values()):
                 raise RuntimeError("A film is already rendering. Wait for it to finish.")
+            fd, name = tempfile.mkstemp(prefix="motion-plan-", suffix=".tmp", dir=self.output_dir)
+            try:
+                with os.fdopen(fd, "w") as saved:
+                    json.dump(plan, saved, indent=2)
+                Path(name).replace(self.output_dir / "motion-plan.json")
+            finally:
+                Path(name).unlink(missing_ok=True)
             job_id = uuid.uuid4().hex
             self.jobs[job_id] = {
                 "id": job_id,
@@ -106,9 +139,12 @@ class FilmEditor:
                 "completed": 0,
                 "total": len(sources),
             }
+            try:
+                self.executor.submit(self._run, job_id, plan, music, pace)
+            except RuntimeError:
+                self.jobs.pop(job_id, None)
+                raise
             self.seed_plan = plan
-            (self.output_dir / "motion-plan.json").write_text(json.dumps(plan, indent=2))
-            self.executor.submit(self._run, job_id, plan, music, pace)
             return dict(self.jobs[job_id])
 
     def _run(self, job_id, plan, music, pace):
@@ -139,6 +175,9 @@ class FilmEditor:
                     seconds=result["duration_seconds"],
                     video_url=f"/renders/{job_id}.mp4",
                     credit=self.credit if music == "energy" else None,
+                    pace=result["pace"],
+                    width=result["width"],
+                    height=result["height"],
                 )
         except Exception:  # noqa: BLE001 - subprocess errors may contain private filesystem paths
             with self.lock:
@@ -175,19 +214,56 @@ class FilmEditor:
 
 def handler_for(editor):
     class Handler(BaseHTTPRequestHandler):
-        def send(self, status, content, mime="application/json"):
+        def response_headers(self, status, length, mime, extra=None):
             self.send_response(status)
             self.send_header("Content-Type", mime)
-            self.send_header("Content-Length", str(len(content)))
+            self.send_header("Content-Length", str(length))
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
+            for key, value in (extra or {}).items():
+                self.send_header(key, value)
             self.end_headers()
+
+        def send(self, status, content, mime="application/json"):
+            self.response_headers(status, len(content), mime)
             # Browsers cancel video preloads when they have enough metadata.
             with suppress(BrokenPipeError, ConnectionResetError):
                 self.wfile.write(content)
 
         def json(self, status, data):
             self.send(status, json.dumps(data).encode())
+
+        def video(self, path):
+            try:
+                source = path.open("rb")
+            except OSError:
+                self.json(404, {"error": "Video is no longer available."})
+                return
+            with source:
+                source.seek(0, 2)
+                size = source.tell()
+                requested = self.headers.get("Range")
+                extra = {"Accept-Ranges": "bytes"}
+                try:
+                    start, end = byte_range(requested, size)
+                except ValueError:
+                    extra["Content-Range"] = f"bytes */{size}"
+                    self.response_headers(416, 0, "video/mp4", extra)
+                    return
+                if requested:
+                    extra["Content-Range"] = f"bytes {start}-{end}/{size}"
+                self.response_headers(
+                    206 if requested else 200, end - start + 1, "video/mp4", extra
+                )
+                source.seek(start)
+                remaining = end - start + 1
+                with suppress(BrokenPipeError, ConnectionResetError):
+                    while remaining > 0:
+                        chunk = source.read(min(64 * 1024, remaining))
+                        if not chunk:
+                            break
+                        self.wfile.write(chunk)
+                        remaining -= len(chunk)
 
         def do_GET(self):
             if self.headers.get("Host") != f"{editor.host}:{editor.port}":
@@ -207,11 +283,7 @@ def handler_for(editor):
                 if job.get("status") != "complete":
                     self.json(404, {"error": "Video not available."})
                 else:
-                    self.send(
-                        200,
-                        (editor.output_dir / f"trip-film-{job_id}.mp4").read_bytes(),
-                        "video/mp4",
-                    )
+                    self.video(editor.output_dir / f"trip-film-{job_id}.mp4")
             else:
                 self.json(404, {"error": "Not found."})
 
@@ -236,6 +308,13 @@ def handler_for(editor):
                 self.json(400, {"error": str(error)})
             except RuntimeError as error:
                 self.json(409, {"error": str(error)})
+            except OSError:
+                self.json(
+                    503,
+                    {
+                        "error": "Could not save the plan. Check the output folder permissions and free disk space, then retry."
+                    },
+                )
 
         def log_message(self, *args):
             pass

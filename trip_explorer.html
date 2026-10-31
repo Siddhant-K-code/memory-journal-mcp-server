@@ -518,7 +518,7 @@
               ? "Main"
               : s || "Unknown";
     };
-    const personLabel = (n) => (n === people[0] ? "You" : n);
+    const personLabel = (n) => n;
     function stateSave() {
       if (window.openai?.setWidgetState) {
         const snapshot = {
@@ -841,7 +841,10 @@
           Math.max(175, names.length * 32 + 75),
           title,
         ),
-        left = 80,
+        left = Math.min(
+          150,
+          Math.max(80, (d3.max(names, (n) => String(n).length) || 0) * 7 + 15),
+        ),
         right = 10,
         top = 25,
         bottom = 42,
@@ -890,7 +893,9 @@
           .attr("x", left - 8)
           .attr("y", y(n) + y.bandwidth() / 2 + 4)
           .attr("text-anchor", "end")
-          .text(n),
+          .attr("data-tooltip", n)
+          .attr("aria-label", n)
+          .text(n.length > 18 ? n.slice(0, 17) + "…" : n),
       );
       days.forEach((d, i) => {
         if (width > 430 || i % 2 === 0)
