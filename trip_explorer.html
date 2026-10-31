@@ -267,9 +267,39 @@
     <div id="tx-motion-gallery" class="tx-gallery"></div>
     <div id="tx-motion-pager" class="viz-controls"></div>
     <p id="tx-film-plan" aria-live="polite"></p>
+    <div class="viz-controls">
+      <div class="tx-field">
+        <label class="form-label"
+          >Soundtrack<span class="tx-control"
+            ><select id="tx-film-music" class="form-select">
+              <option value="energy">Travel energy</option>
+              <option value="none">No music</option>
+            </select></span
+          ></label
+        >
+      </div>
+      <div class="tx-field">
+        <label class="form-label"
+          >Pace<span class="tx-control"
+            ><select id="tx-film-pace" class="form-select">
+              <option value="fast">Fast</option>
+              <option value="balanced">Balanced</option>
+            </select></span
+          ></label
+        >
+      </div>
+      <button type="button" class="btn btn-primary" id="tx-render-film" hidden>
+        Regenerate video
+      </button>
+      <button type="button" class="btn" id="tx-export-plan">
+        Export motion plan
+      </button>
+    </div>
+    <p id="tx-render-status" role="status" aria-live="polite"></p>
+    <div id="tx-render-preview" class="tx-render-preview"></div>
     <p class="text-small">
-      Unavailable originals need downloading in Photos before editing. This
-      explorer never downloads media or renders a new film on a button click.
+      Downloads from iCloud stay under your control. The local editor renders
+      new copies and keeps your originals intact.
     </p>
   </section>
   <section
@@ -453,7 +483,7 @@
       positions: {},
       motion: "live",
       motionPage: 0,
-      film: [...D.shortlist],
+      film: [...(D.film_plan || D.shortlist)],
     };
     const safe = (value) =>
       String(value ?? "").replace(
@@ -506,7 +536,7 @@
             tripExplorer: {
               ...S,
               keepers: S.keepers.slice(-100),
-              film: S.film.slice(-30),
+              film: S.film.slice(-100),
               positions: {},
             },
           };
@@ -515,6 +545,18 @@
         }
         window.openai.setWidgetState(snapshot).catch(() => {});
       }
+      root.dispatchEvent(
+        new CustomEvent("trip:plan-change", { detail: motionPlan() }),
+      );
+    }
+    function motionPlan() {
+      return {
+        schema_version: 1,
+        start_date: A.scope.start_date,
+        end_date: A.scope.end_date,
+        timezone: D.scope.timezone,
+        uuids: [...S.film],
+      };
     }
     function restore(value) {
       const v = value?.privateContent?.tripExplorer;
@@ -538,7 +580,7 @@
                 key === "film" ? byId.has(u) : validIds.has(u),
               ),
             ),
-          ].slice(0, key === "keepers" ? 352 : 30);
+          ].slice(0, key === "keepers" ? 352 : key === "film" ? 100 : 30);
       if (v.positions && typeof v.positions === "object") {
         S.positions = {};
         for (const [u, p] of Object.entries(v.positions))
@@ -1404,6 +1446,55 @@
       motion();
       stateSave();
     };
+    root.addEventListener("trip:request-plan", () =>
+      root.dispatchEvent(
+        new CustomEvent("trip:plan-change", { detail: motionPlan() }),
+      ),
+    );
+    root.addEventListener("trip:set-plan", (event) => {
+      const ids = event.detail?.uuids;
+      if (
+        Array.isArray(ids) &&
+        ids.length <= 100 &&
+        ids.every((u) => byId.has(u))
+      ) {
+        S.film = [...new Set(ids)];
+        S.motionPage = 0;
+        motion();
+        stateSave();
+      }
+    });
+    root.addEventListener("trip:film-rendered", (event) => {
+      D.film = { seconds: event.detail.seconds, clips: event.detail.total };
+      motion();
+    });
+    $("export-plan").onclick = () => {
+      const url = URL.createObjectURL(
+        new Blob([JSON.stringify(motionPlan(), null, 2)], {
+          type: "application/json",
+        }),
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "trip-motion-plan.json";
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+    if (window.openai?.sendFollowUpMessage) {
+      $("render-film").hidden = false;
+      $("render-film").onclick = () =>
+        window.openai.sendFollowUpMessage({
+          title: "Regenerate trip video",
+          prompt:
+            "Regenerate my local trip film from this exact motion plan: " +
+            JSON.stringify(motionPlan()) +
+            ". Soundtrack: " +
+            $("film-music").value +
+            ". Pace: " +
+            $("film-pace").value +
+            ". Keep the plan order and show the resulting video.",
+        });
+    }
     root.addEventListener("input", (e) => {
       if (e.target.dataset.position) {
         const uuid = e.target.dataset.position,

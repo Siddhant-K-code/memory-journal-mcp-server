@@ -18,6 +18,11 @@ jobs:
           python-version: "3.11"
           enable-cache: true
       - run: uv sync --locked
+      - name: Ensure FFmpeg for real film-rendering tests
+        run: |
+          if ! command -v ffmpeg; then
+            brew install ffmpeg
+          fi
       - run: uv run ruff check
       - run: uv run ruff format --check
       - run: uv run python -m pytest -q

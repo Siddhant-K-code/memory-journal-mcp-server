@@ -147,6 +147,28 @@
     </style>
   </head>
   <body>
+    <script>
+      if (!window.openai) {
+        const stateKey = () =>
+          "trip-explorer:" +
+          document.getElementById("trip-explorer")?.dataset.reportId;
+        window.openai = {
+          get widgetState() {
+            try {
+              return JSON.parse(localStorage.getItem(stateKey()) || "null");
+            } catch {
+              return null;
+            }
+          },
+          setWidgetState(value) {
+            try {
+              localStorage.setItem(stateKey(), JSON.stringify(value));
+            } catch {}
+            return Promise.resolve();
+          },
+        };
+      }
+    </script>
     <main><!--TRIP_REPORT--></main>
   </body>
 </html>

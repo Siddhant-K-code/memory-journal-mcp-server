@@ -163,12 +163,40 @@ export PHOTO_ALLOWED_PERSON_NAMES='["Alex", "Sam", "Taylor"]'
 uv run trip_report.py --start-date 2026-10-24 --end-date 2026-10-30 \
   --timezone Asia/Tokyo --location Kyoto --location Osaka \
   --location-mode city --person-name Alex --person-name Sam \
-  --include-labels --standalone --preview-size 384 --output /private/tmp/trip-report.html
+  --include-labels --standalone --preview-size 384 --output /private/tmp/trip-report.html \
+  --data-json /private/tmp/trip-data.json --media-index /private/tmp/private-media-index.json
 ```
 
 Host disclosure settings also apply to this command. `--selection-json` accepts a JSON UUID list; `--shortlist-json` sets the initial carousel. The report supports a day/hour timeline, family coverage, rapid-shot and preview-hash comparisons, experimental score sorting, camera/mode browsing, reorderable carousel crop previews, a motion plan and archive checks. Preview-hash pairs are limited to 60 seconds and the same known city, with a Hamming distance of at most 10/64; these are comparison candidates, not verified duplicates. Reports without city disclosure disable hash-pair suggestions rather than grouping unknown cities. Crop and keeper choices change the report only. The command does not render videos, modify Photos, download iCloud assets or call an AI provider.
 
 Reports embed private metadata and local JPEG derivatives with embedded image metadata removed. They are not uploaded; keep the output outside a public checkout. The chart library loads from jsDelivr, which receives an ordinary library request, not report data. Without `--standalone`, output is an inline fragment capped at 1 MB; narrow the selection if it exceeds the limit. Standalone reports allow larger previews. A public city-centre map requires separately supplied public geometry; no photo GPS is read to create a map.
+
+### Regenerate a film from the Motion plan
+
+The optional local editor adds a user-triggered render workflow. The MCP tools remain read-only. Install **FFmpeg**, including `ffprobe`, before using the editor or film command.
+
+```sh
+uv run local_editor.py --report /private/tmp/trip-report.html \
+  --data /private/tmp/trip-data.json --media-index /private/tmp/private-media-index.json \
+  --output-dir /private/tmp/trip-renders --port 8770 \
+  --music /absolute/path/to/licensed-music.mp3 --bpm 130 \
+  --credit-json /absolute/path/to/music-credit.json
+```
+
+Open `http://127.0.0.1:8770/`, select clips in **Motion**, choose a soundtrack and pace, then click **Regenerate video**. Progress, video playback, download and music credits appear in the same view. The order of the plan is preserved. Browser storage saves the selection between reloads; **Export motion plan** saves a portable JSON copy. Previously completed renders remain available after restarting the editor. Offline reports can export plans; direct rendering requires the loopback editor. In-chat reports can ask the host to regenerate through a follow-up when that capability is available.
+
+`--music` is optional; omit it for silent exports. Supply music you have permission to use and follow its attribution requirements. The optional credit JSON contains `title`, `artist`, `credit`, `source`, `license` and `license_url`; its credit is shown with the output and saved beside it. No music or personal media is bundled with this repository. Music is normalized, excerpted and faded; source clip audio is muted. Fast cuts use four beats per clip and Balanced uses six, based on the configured BPM. Short motion clips hold their final frame to fill a beat interval. Output is H.264/AAC at 1080×1920, 30 fps, with a blurred background behind the complete foreground frame. Source metadata is removed and music credit can be retained.
+
+The editor binds only to `127.0.0.1`, validates Host/Origin plus a random request token for writes, accepts UUIDs only from its trusted private index, runs one render at a time and rejects arbitrary input paths or unknown presets. A plan must contain 1–100 unique UUIDs. Every selected motion file must be local; missing media fails explicitly rather than being silently skipped. Each render gets new output files. Originals are not modified, iCloud files are not downloaded, and nothing is published or uploaded. Keep the media index private: it contains filesystem paths. Refresh it after downloading new originals in Photos.
+
+An exported plan can also be rendered without the browser:
+
+```sh
+uv run film.py --plan /absolute/path/to/trip-motion-plan.json \
+  --data /private/tmp/trip-data.json --media-index /private/tmp/private-media-index.json \
+  --output /private/tmp/new-trip-film.mp4 --pace fast --bpm 130 \
+  --music /absolute/path/to/licensed-music.mp3 --credit-json /absolute/path/to/music-credit.json
+```
 
 ### Inspect a candidate
 

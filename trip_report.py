@@ -2,6 +2,7 @@
 
 import argparse
 import base64
+import hashlib
 import io
 import json
 import re
@@ -88,6 +89,10 @@ def render(data, destination, *, standalone=False):
     if not re.search(r"/\*TRIP_DATA\*/\s*null", template):
         raise ValueError("Report template is missing its data marker.")
     html = re.sub(r"/\*TRIP_DATA\*/\s*null", lambda _: encoded, template, count=1)
+    report_id = hashlib.sha256(
+        "\n".join(sorted(r["uuid"] for r in data["records"])).encode()
+    ).hexdigest()[:16]
+    html = html.replace('id="trip-explorer"', f'id="trip-explorer" data-report-id="{report_id}"', 1)
     if not standalone and len(html.encode()) > 1_000_000:
         raise ValueError("Report exceeds 1 MB. Narrow the selection or reduce preview sizes.")
     if standalone:
@@ -112,6 +117,8 @@ def main():
     parser.add_argument("--selection-json", help="JSON list of UUIDs for an exact selection")
     parser.add_argument("--shortlist-json", help="JSON list of shortlisted UUIDs")
     parser.add_argument("--output", required=True)
+    parser.add_argument("--data-json", help="Optional private report data for the local editor")
+    parser.add_argument("--media-index", help="Optional PRIVATE UUID-to-file index; never share it")
     parser.add_argument("--preview-size", type=int, choices=[96, 192, 384], default=96)
     parser.add_argument(
         "--standalone",
@@ -153,6 +160,15 @@ def main():
                     data["thumbnails"][uuid] = value
                     break
     render(data, args.output, standalone=args.standalone)
+    if args.data_json:
+        Path(args.data_json).write_text(json.dumps(data, separators=(",", ":"), allow_nan=False))
+    if args.media_index:
+        by_id = {p.uuid: p for p in db.photos() if server.is_visible(p)}
+        index = {}
+        for row in data["records"]:
+            photo = by_id[row["uuid"]]
+            index[row["uuid"]] = {"original": photo.path, "motion": photo.path_live_photo}
+        Path(args.media_index).write_text(json.dumps(index, indent=2))
     print(f"Private report saved to {args.output}")
 
 
