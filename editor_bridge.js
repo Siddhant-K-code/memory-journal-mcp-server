@@ -15,6 +15,37 @@
     : "No soundtrack configured";
   music.options[0].disabled = !config.music_available;
   if (!config.music_available) music.value = "none";
+  const settingsKey = "trip-film-settings:" + root.dataset.reportId;
+  let savedSettings = {};
+  try {
+    savedSettings = JSON.parse(localStorage.getItem(settingsKey) || "{}");
+  } catch {}
+  savedSettings ||= {};
+  const lastPace = ["fast", "balanced"].includes(config.latest?.pace)
+    ? config.latest.pace
+    : config.latest &&
+        Math.abs(
+          config.latest.seconds / config.latest.total - 360 / config.bpm,
+        ) < 0.05
+      ? "balanced"
+      : "fast";
+  pace.value = ["fast", "balanced"].includes(savedSettings.pace)
+    ? savedSettings.pace
+    : lastPace;
+  if (config.music_available)
+    music.value = ["energy", "none"].includes(savedSettings.music)
+      ? savedSettings.music
+      : config.latest && !config.latest.credit
+        ? "none"
+        : "energy";
+  music.onchange = pace.onchange = () => {
+    try {
+      localStorage.setItem(
+        settingsKey,
+        JSON.stringify({ music: music.value, pace: pace.value }),
+      );
+    } catch {}
+  };
   let plan = null;
   root.addEventListener("trip:plan-change", (event) => {
     plan = event.detail;
