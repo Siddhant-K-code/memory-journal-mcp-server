@@ -1,0 +1,12 @@
+# Replace all three absolute paths with paths on your Mac.
+# Merge this table into ~/.codex/config.toml; preserve existing settings.
+[mcp_servers.smart-photo-journal]
+command = "/absolute/path/to/uv"
+args = ["--directory", "/Users/YOUR_USERNAME/Developer/memory-journal-mcp-server", "run", "--locked", "--no-dev", "server.py"]
+startup_timeout_sec = 120
+tool_timeout_sec = 180
+
+[mcp_servers.smart-photo-journal.env]
+PHOTO_LIBRARY_PATH = "/Users/YOUR_USERNAME/Pictures/Photos Library.photoslibrary"
+PHOTO_LOCATION_POLICY = "none"
+PHOTO_ALLOWED_PERSON_NAMES = "[]"

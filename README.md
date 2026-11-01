@@ -18,7 +18,11 @@ uv sync --locked --no-dev
 
 The server uses the last-opened Photos library by default. Set `PHOTO_LIBRARY_PATH` to select a specific `.photoslibrary` directory. This is useful when automatic library discovery cannot read the Photos preferences file.
 
-### Codex Desktop / CLI
+### ChatGPT, Codex and other desktop apps
+
+Start with the [desktop setup guide](docs/desktop-setup.md) for ChatGPT Desktop, Codex Desktop/CLI, Claude Desktop and Cursor. It includes complete configuration examples, macOS permissions, privacy controls and a first-search checklist. This server uses local **stdio**, not an HTTP URL; the local film editor is a separate optional application.
+
+### Codex Desktop / CLI quick start
 
 Add this to `~/.codex/config.toml`, using absolute paths on your Mac:
 
@@ -35,7 +39,9 @@ PHOTO_LIBRARY_PATH = "/Users/YOUR_USERNAME/Pictures/Photos Library.photoslibrary
 
 Find the `uv` executable with `command -v uv`. Restart the client after editing its configuration. See the [official Codex MCP configuration documentation](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
 
-### Claude Desktop / other stdio clients
+### Claude Desktop / Cursor quick start
+
+Merge this entry into your client's existing configuration. See the [setup guide](docs/desktop-setup.md#claude-desktop) for configuration-file locations. Do not replace your other servers.
 
 ```json
 {
