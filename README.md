@@ -39,9 +39,9 @@ PHOTO_LIBRARY_PATH = "/Users/YOUR_USERNAME/Pictures/Photos Library.photoslibrary
 
 Find the `uv` executable with `command -v uv`. Restart the client after editing its configuration. See the [official Codex MCP configuration documentation](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
 
-### Claude Desktop / Cursor quick start
+### Claude Desktop quick start
 
-Merge this entry into your client's existing configuration. See the [setup guide](docs/desktop-setup.md#claude-desktop) for configuration-file locations. Do not replace your other servers.
+Merge this entry into Claude Desktop's existing configuration. See the [setup guide](docs/desktop-setup.md#claude-desktop) for the configuration-file location. Do not replace your other servers. For Cursor, use [examples/cursor.json](examples/cursor.json), which explicitly sets `type` to `stdio`, and follow the [Cursor setup steps](docs/desktop-setup.md#cursor).
 
 ```json
 {

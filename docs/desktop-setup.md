@@ -109,7 +109,7 @@ An empty result is valid if you have no matching photos. Both dates are inclusiv
 
 ## Optional: disclose selected names or cities
 
-Defaults return no person names or location fields. To permit city output, set `PHOTO_LOCATION_POLICY` to `city` in the host's server environment. To permit specific existing Photos tags, set `PHOTO_ALLOWED_PERSON_NAMES` to a **JSON array encoded as an environment string**, for example `["Example Person"]`. In a JSON client configuration the value is written as `"[\"Example Person\"]"`. In TOML you can write `PHOTO_ALLOWED_PERSON_NAMES = '["Example Person"]'`.
+Defaults return no person names or location values; search records retain `persons: []` and `location: null`. To permit city output, set `PHOTO_LOCATION_POLICY` to `city` in the host's server environment. To permit specific existing Photos tags, set `PHOTO_ALLOWED_PERSON_NAMES` to a **JSON array encoded as an environment string** containing at most 10 names, for example `["Example Person"]`. In a JSON client configuration the value is written as `"[\"Example Person\"]"`. In TOML you can write `PHOTO_ALLOWED_PERSON_NAMES = '["Example Person"]'`.
 
 Restart the server, then explicitly request `location_mode: "city"` and/or the exact allowed tags in `person_names` on the relevant tool. Both host permission and tool projection must allow the field. A prompt alone cannot raise the host ceiling. Precise coordinates are never returned. Set the environment back to `none` and `[]` and restart to revoke those projections.
 
